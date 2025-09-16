@@ -11,7 +11,7 @@
 - `.github/workflows/` — CI pipelines based on `listee-dev/listee-ci@v1` workflows.
 
 ## Getting Started
-1. Install Bun `1.2.19` or later.
+1. Install Bun `1.2.19` (or later). We recommend pinning via `"packageManager": "bun@1.2.19"` in the root package.json for reproducibility.
 2. Run `bun install` to sync dependencies.
 3. Use `bun run lint`, `bun run build`, and `bun run test` to verify changes locally.
 4. Initialize Changesets with `bun run changeset init` if you are bootstrapping a fresh clone.
