@@ -3,6 +3,11 @@
 ## Project Structure & Module Organization
 This monorepo uses Bun workspaces. Each package lives in `packages/<name>` with source under `src/`. Build outputs flow to `dist/` and must never be edited manually. Shared tooling lives at the root (`tsconfig.json`, `biome.json`, `vitest.config.ts`, `bun.lock`); review cross-package impact before changing these files.
 
+## Dependency Management
+- Use the root `package.json` `catalog` to pin shared dependency versions. Packages reference catalog entries with the `"catalog:"` protocol.
+- Always run `bun install` from the repository root so that catalog resolutions and the shared `bun.lock` stay in sync.
+- When publishing npm packages, ensure you build or pack with Bun (`bun pm pack` / `bun publish`) so catalog references collapse to concrete semver ranges.
+
 ## Build, Test, and Development Commands
 - `bun install` — Sync dependencies and respect the lockfile used in CI.
 - `bun run build` — Run the TypeScript project references build, emitting artifacts to every `dist/` folder.
