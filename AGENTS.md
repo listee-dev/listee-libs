@@ -12,7 +12,7 @@ This monorepo uses Bun workspaces. Each package lives in `packages/<name>` with 
 - `bun install` — Sync dependencies and respect the lockfile used in CI.
 - `bun run build` — Run the TypeScript project references build, emitting artifacts to every `dist/` folder.
 - `bun run lint` — Execute Biome formatter and linter in a single pass.
-- `bun run test` — Launch Vitest in the Node environment for the entire workspace.
+- `bun test` or `bun run test` — Execute Bun's built-in test runner across the workspace (see `packages/db/src/index.test.ts` for examples).
 - `bun run changeset` — Draft release notes and version bumps via Changesets.
 - `bun run clean` — Remove build artifacts and reinstall dependencies (does not delete untracked source files).
 
@@ -20,7 +20,7 @@ This monorepo uses Bun workspaces. Each package lives in `packages/<name>` with 
 TypeScript runs with `strict` enabled; avoid implicit `any` and replace `as` casts with dedicated type guards or the `satisfies` operator where appropriate. Prefer `unknown` for external inputs. Use kebab-case for package folders, PascalCase for types and enums, and camelCase for variables and functions. Always commit the formatter output produced by `bun run lint`.
 
 ## Testing Guidelines
-Vitest is the test runner. Co-locate tests as `*.test.ts` files or inside `__tests__/`. Name suites with behavior-focused sentences so failures highlight intent. For new features, cover both success paths and the most representative error paths. Run `bun run test` (and `bun run build` when touching types) before opening a PR.
+Use Bun's built-in test runner. Co-locate tests as `*.test.ts` files or inside `__tests__/`. Name suites with behavior-focused sentences so failures highlight intent. For new features, cover both success paths and the most representative error paths. Run `bun test` (and `bun run build` when touching types) before opening a PR.
 
 ## Commit & Pull Request Guidelines
 Write imperative commit summaries under 50 characters (e.g., `Add chat session schema`) and include context, impact, and test notes in the body when needed. PR descriptions must capture purpose, key changes, test evidence, linked issues, and screenshots or logs for user-facing updates. Attach the latest `.changeset/` entry whenever a release is required.

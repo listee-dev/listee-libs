@@ -26,6 +26,7 @@
   - `db` — shared `drizzle-orm` database instance backed by the cached connection.
   - `createRlsClient`/`createDrizzle` — wrap transactions with Supabase-style RLS claims and role switching.
 - Publishes generated types alongside compiled output (`sideEffects: false` for optimal tree-shaking).
+- Ships with Bun-based unit tests (`packages/db/src/index.test.ts`) that mock `postgres`/`drizzle-orm`. Run `bun test` from the repo root to execute them.
 
 ## Contribution Notes
 - Follow the guidance in `AGENTS.md` for agent automation workflows and repository conventions.
