@@ -3,6 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "packageManager": "bun@1.2.19",
+  "catalog": {
+    "drizzle-orm": "^0.40.0",
+    "postgres": "^3.4.5"
+  },
   "workspaces": [
     "packages/*"
   ],
