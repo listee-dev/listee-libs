@@ -2,7 +2,7 @@
   "name": "listee-libs",
   "version": "0.0.0",
   "private": true,
-  "packageManager": "bun@1.2.19",
+  "packageManager": "bun@1.2.22",
   "catalog": {
     "drizzle-orm": "^0.40.0",
     "postgres": "^3.4.5"
@@ -12,9 +12,11 @@
   ],
   "scripts": {
     "lint": "biome check",
-    "lint:fix": "biome check --write"
+    "lint:fix": "biome check --write",
+    "test": "bun test"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.2.4"
+    "@biomejs/biome": "2.2.4",
+    "@types/bun": "1.2.22"
   }
 }

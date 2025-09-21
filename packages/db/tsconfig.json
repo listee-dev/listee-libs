@@ -12,8 +12,9 @@
     "declarationMap": true,
     "outDir": "dist",
     "rootDir": "src",
-    "verbatimModuleSyntax": true
+    "verbatimModuleSyntax": true,
+    "types": ["@types/bun"]
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"],
-  "exclude": ["dist"]
+  "exclude": ["dist", "src/**/*.test.ts"]
 }
