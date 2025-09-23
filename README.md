@@ -33,5 +33,22 @@
 - Keep documentation and code comments in English.
 - Coordinate feature work through focused branches (`feature/...`, `chore/...`, etc.) and submit PRs with clear descriptions, linked issues, and test evidence.
 
+## Architecture Guidelines
+
+### Responsibility Boundaries
+- `routes` only depend on `queries`, translate the return values into HTTP responses, and decide status codes.
+- `queries` orchestrate the necessary `services` and `repositories` for each use case and accept dependencies via factories so they remain easy to test.
+- `services` may depend on `repositories` (never the other way around). When a service grows large, consider moving domain logic under a dedicated `domain/` module and keeping application services thin.
+- `repositories` sit at the bottom layer and encapsulate external SDK calls, SQL, or KV access. They should return plain TypeScript/domain types (`string`, `Date`, structured objects) to upstream layers.
+
+### Dependency Flow
+Keep a single direction: `routes → queries → (services → repositories)`. With the stack arranged this way you can reuse everything below `queries` across different runtimes (e.g., Cloudflare Workers) and mock each layer in isolation during tests.
+
+### Authentication vs Authorization
+- Treat authentication (identifying who the caller is) and authorization (deciding what that caller may do) as separate concerns under the `auth` package.
+- Place authentication adapters in `packages/auth/src/authentication/` and expose helpers such as `getAuthenticatedUser(request)` so each runtime can plug in its own token/session verification.
+- Organize authorization policies under `packages/auth/src/authorization/` with domain-specific modules (e.g., `policies/chat.ts` providing `canAccessChat`). Policies may declare repository interfaces that the application injects, keeping policy evaluation independent from data fetching details.
+- The recommended execution order for an authenticated endpoint is `Route Handler → Authentication → Queries → Authorization → Services/Repositories`. Queries receive the authenticated actor (for example, via context) and call the relevant authorization policy before touching domain services.
+
 ## Release Process
 Changesets drive versioning and publishing. Merging to `main` triggers the shared CI pipelines, including the release workflow that prepares npm publications. Confirm published versions for `@listee/types` and `@listee/db` before announcing availability to downstream projects.

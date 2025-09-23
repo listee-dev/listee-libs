@@ -5,6 +5,7 @@ This monorepo uses Bun workspaces. Each package lives in `packages/<name>` with 
 
 ## Dependency Management
 - Use the root `package.json` `catalog` to pin shared dependency versions. Packages reference catalog entries with the `"catalog:"` protocol.
+- Add new shared dependencies to the root catalog before consuming them in individual packages. This keeps versions centralized and avoids drift across workspaces.
 - Always run `bun install` from the repository root so that catalog resolutions and the shared `bun.lock` stay in sync.
 - When publishing npm packages, ensure you build or pack with Bun (`bun pm pack` / `bun publish`) so catalog references collapse to concrete semver ranges.
 
@@ -28,3 +29,12 @@ Write imperative commit summaries under 50 characters (e.g., `Add chat session s
 ## Security & Release Management
 Never commit secrets; surface runtime configuration via factories that accept environment values. Version changes must follow SemVer, with breaking updates declared in Changesets. Verify releases by checking the generated changelog and confirming publication for each package on npm.
 Enable secret scanning and push protection in CI (e.g., gitleaks), and require npm 2FA + provenance for publishing.
+
+## Architecture Playbook
+- Maintain a single dependency direction (`routes → queries → services → repositories`) so that upper layers stay ignorant of lower-level details.
+- `routes` should delegate exclusively to `queries`, translate their results into HTTP responses, and decide status codes. Avoid placing business logic here.
+- `queries` compose the necessary `services` and `repositories` per use case. Inject dependencies through factories so tests can swap in mocks easily.
+- `services` may depend on `repositories`, but repositories must never depend on services. Extract complex domain logic into dedicated modules and keep the service layer thin.
+- `repositories` encapsulate external SDK, SQL, or KV access and return plain or domain-specific types (`string`, `Date`, structured objects) to callers.
+- Separate authentication and authorization concerns inside `packages/auth`. Place runtime-specific adapters under `authentication/` and domain policies under `authorization/` (e.g., `policies/chat.ts` exposing `canAccessChat`). Policies can declare repository interfaces and receive concrete implementations via dependency injection.
+- Process authenticated requests in the order `Route Handler → Authentication → Queries → Authorization → Services/Repositories`, passing the authenticated actor into queries before evaluating policies.
