@@ -1,0 +1,22 @@
+{
+  "name": "@listee/api",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@listee/auth": "workspace:*",
+    "@listee/db": "workspace:*",
+    "@listee/types": "workspace:*",
+    "hono": "catalog:"
+  }
+}

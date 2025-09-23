@@ -148,3 +148,7 @@ export function createDrizzle(
 ): RlsClient {
   return createRlsClient(token, options);
 }
+
+export { sql } from "drizzle-orm";
+
+export * from "./schema/index.js";

@@ -4,7 +4,7 @@
     "declaration": true,
     "declarationMap": true,
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDirs": ["src", "../db/src", "../auth/src", "../types/src"],
     "verbatimModuleSyntax": true,
     "types": ["@types/bun"]
   },
