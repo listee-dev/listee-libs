@@ -1,22 +1,12 @@
 import type { Database } from "@listee/db";
 import { tasks } from "@listee/db";
-import type { Task } from "@listee/types";
+import type {
+  FindTaskRepositoryParams,
+  ListTasksRepositoryParams,
+  Task,
+  TaskRepository,
+} from "@listee/types";
 import { eq } from "drizzle-orm";
-
-export interface ListTasksRepositoryParams {
-  readonly categoryId: string;
-  readonly userId?: string;
-}
-
-export interface FindTaskRepositoryParams {
-  readonly taskId: string;
-  readonly userId?: string;
-}
-
-export interface TaskRepository {
-  listByCategory(params: ListTasksRepositoryParams): Promise<readonly Task[]>;
-  findById(params: FindTaskRepositoryParams): Promise<Task | null>;
-}
 
 export function createTaskRepository(db: Database): TaskRepository {
   async function listByCategory(

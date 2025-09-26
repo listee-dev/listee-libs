@@ -1,15 +1,10 @@
+import { AuthenticationError } from "@listee/auth";
 import type {
   AuthenticationProvider,
   AuthenticationResult,
-} from "@listee/auth";
-import { AuthenticationError } from "@listee/auth";
+  RegisterTaskRoutesOptions,
+} from "@listee/types";
 import type { Hono } from "hono";
-import type { TaskQueries } from "../types";
-
-export interface RegisterTaskRoutesOptions {
-  readonly queries?: TaskQueries;
-  readonly authentication?: AuthenticationProvider;
-}
 
 interface TaskResponse {
   readonly id: string;

@@ -3,7 +3,7 @@ export type {
   AuthenticationContext,
   AuthenticationProvider,
   AuthenticationResult,
-} from "./authentication/index.js";
+} from "@listee/types";
 export {
   AuthenticationError,
   createHeaderAuthentication,

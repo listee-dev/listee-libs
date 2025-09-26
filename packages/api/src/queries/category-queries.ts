@@ -1,13 +1,9 @@
-import type { CategoryService } from "../services/category-service";
 import type {
   CategoryQueries,
+  CategoryQueriesDependencies,
   FindCategoryParams,
   ListCategoriesParams,
-} from "../types";
-
-export interface CategoryQueriesDependencies {
-  readonly service: CategoryService;
-}
+} from "@listee/types";
 
 export function createCategoryQueries(
   dependencies: CategoryQueriesDependencies,

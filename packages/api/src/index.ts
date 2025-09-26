@@ -1,4 +1,15 @@
-export type { AppDependencies } from "./app";
+export type {
+  AppDependencies,
+  CategoryQueries,
+  DatabaseHealthChecker,
+  DatabaseHealthStatus,
+  FindCategoryParams,
+  FindTaskParams,
+  ListCategoriesParams,
+  ListCategoriesResult,
+  ListTasksParams,
+  TaskQueries,
+} from "@listee/types";
 export { createApp, createFetchHandler } from "./app";
 export { createDatabaseHealthChecker } from "./infrastructure/database-health";
 export { createCategoryQueries } from "./queries/category-queries";
@@ -10,14 +21,3 @@ export { registerHealthRoutes } from "./routes/health";
 export { registerTaskRoutes } from "./routes/tasks";
 export { createCategoryService } from "./services/category-service";
 export { createTaskService } from "./services/task-service";
-export type {
-  CategoryQueries,
-  DatabaseHealthChecker,
-  DatabaseHealthStatus,
-  FindCategoryParams,
-  FindTaskParams,
-  ListCategoriesParams,
-  ListCategoriesResult,
-  ListTasksParams,
-  TaskQueries,
-} from "./types";

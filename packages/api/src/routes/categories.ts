@@ -1,15 +1,10 @@
+import { AuthenticationError } from "@listee/auth";
 import type {
   AuthenticationProvider,
   AuthenticationResult,
-} from "@listee/auth";
-import { AuthenticationError } from "@listee/auth";
+  RegisterCategoryRoutesOptions,
+} from "@listee/types";
 import type { Hono } from "hono";
-import type { CategoryQueries } from "../types";
-
-export interface RegisterCategoryRoutesOptions {
-  readonly queries?: CategoryQueries;
-  readonly authentication?: AuthenticationProvider;
-}
 
 interface CategoryResponse {
   readonly id: string;

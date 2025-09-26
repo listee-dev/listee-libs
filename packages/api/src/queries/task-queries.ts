@@ -1,9 +1,9 @@
-import type { TaskService } from "../services/task-service";
-import type { FindTaskParams, ListTasksParams, TaskQueries } from "../types";
-
-export interface TaskQueriesDependencies {
-  readonly service: TaskService;
-}
+import type {
+  FindTaskParams,
+  ListTasksParams,
+  TaskQueries,
+  TaskQueriesDependencies,
+} from "@listee/types";
 
 export function createTaskQueries(
   dependencies: TaskQueriesDependencies,

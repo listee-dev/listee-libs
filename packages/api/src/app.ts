@@ -1,20 +1,8 @@
-import type { AuthenticationProvider } from "@listee/auth";
+import type { AppDependencies } from "@listee/types";
 import { Hono } from "hono";
 import { registerCategoryRoutes } from "./routes/categories";
 import { registerHealthRoutes } from "./routes/health";
 import { registerTaskRoutes } from "./routes/tasks";
-import type {
-  CategoryQueries,
-  DatabaseHealthChecker,
-  TaskQueries,
-} from "./types";
-
-export interface AppDependencies {
-  databaseHealth?: DatabaseHealthChecker;
-  categoryQueries?: CategoryQueries;
-  taskQueries?: TaskQueries;
-  authentication?: AuthenticationProvider;
-}
 
 export function createApp(dependencies: AppDependencies = {}): Hono {
   const app = new Hono();

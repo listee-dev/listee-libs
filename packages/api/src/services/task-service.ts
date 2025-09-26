@@ -1,18 +1,10 @@
-import type { Task } from "@listee/types";
 import type {
   FindTaskRepositoryParams,
   ListTasksRepositoryParams,
-  TaskRepository,
-} from "../repositories/task-repository";
-
-export interface TaskService {
-  listByCategory(params: ListTasksRepositoryParams): Promise<readonly Task[]>;
-  findById(params: FindTaskRepositoryParams): Promise<Task | null>;
-}
-
-export interface TaskServiceDependencies {
-  readonly repository: TaskRepository;
-}
+  Task,
+  TaskService,
+  TaskServiceDependencies,
+} from "@listee/types";
 
 export function createTaskService(
   dependencies: TaskServiceDependencies,

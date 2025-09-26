@@ -1,32 +1,16 @@
-import type { SupabaseToken } from "@listee/db";
-
-export interface AuthenticatedUser {
-  readonly id: string;
-  readonly token: SupabaseToken;
-}
-
-export interface AuthenticationContext {
-  readonly request: Request;
-}
-
-export interface AuthenticationResult {
-  readonly user: AuthenticatedUser;
-}
-
-export interface AuthenticationProvider {
-  authenticate(context: AuthenticationContext): Promise<AuthenticationResult>;
-}
+import type {
+  AuthenticationContext,
+  AuthenticationProvider,
+  AuthenticationResult,
+  HeaderAuthenticationOptions,
+  SupabaseToken,
+} from "@listee/types";
 
 export class AuthenticationError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "AuthenticationError";
   }
-}
-
-export interface HeaderAuthenticationOptions {
-  readonly headerName?: string;
-  readonly scheme?: string;
 }
 
 export function createHeaderAuthentication(

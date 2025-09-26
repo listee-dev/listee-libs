@@ -1,6 +1,6 @@
 import type { Database } from "@listee/db";
 import { sql } from "@listee/db";
-import type { DatabaseHealthChecker } from "../types";
+import type { DatabaseHealthChecker } from "@listee/types";
 import { toErrorMessage } from "../utils/error";
 
 export function createDatabaseHealthChecker(

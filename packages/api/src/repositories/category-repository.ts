@@ -1,25 +1,13 @@
 import type { Database } from "@listee/db";
 import { categories } from "@listee/db";
-import type { Category, PaginatedResult } from "@listee/types";
+import type {
+  Category,
+  CategoryRepository,
+  FindCategoryRepositoryParams,
+  ListCategoriesRepositoryParams,
+  PaginatedResult,
+} from "@listee/types";
 import { and, desc, eq, lt } from "drizzle-orm";
-
-export interface ListCategoriesRepositoryParams {
-  readonly userId: string;
-  readonly limit: number;
-  readonly cursor?: string | null;
-}
-
-export interface FindCategoryRepositoryParams {
-  readonly categoryId: string;
-  readonly userId?: string;
-}
-
-export interface CategoryRepository {
-  listByUserId(
-    params: ListCategoriesRepositoryParams,
-  ): Promise<PaginatedResult<Category>>;
-  findById(params: FindCategoryRepositoryParams): Promise<Category | null>;
-}
 
 function parseCursor(value: string | null | undefined): Date | null {
   if (value === undefined || value === null || value.length === 0) {

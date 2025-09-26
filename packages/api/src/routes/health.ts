@@ -1,10 +1,6 @@
+import type { RegisterHealthRoutesOptions } from "@listee/types";
 import type { Hono } from "hono";
-import type { DatabaseHealthChecker } from "../types";
 import { toErrorMessage } from "../utils/error";
-
-export interface RegisterHealthRoutesOptions {
-  databaseHealth?: DatabaseHealthChecker;
-}
 
 export function registerHealthRoutes(
   app: Hono,

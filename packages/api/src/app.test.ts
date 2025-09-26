@@ -1,12 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { createHeaderAuthentication } from "@listee/auth";
-import type { Category, Task } from "@listee/types";
-import { createApp } from "./app";
 import type {
+  Category,
   CategoryQueries,
   ListCategoriesResult,
+  Task,
   TaskQueries,
-} from "./types";
+} from "@listee/types";
+import { createApp } from "./app";
 
 function createRequest(path: string, init: RequestInit = {}): Request {
   return new Request(`http://localhost${path}`, init);
