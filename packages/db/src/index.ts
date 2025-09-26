@@ -4,6 +4,13 @@ import postgres, { type Options, type PostgresType, type Sql } from "postgres";
 
 type DefaultTypeMap = Record<string, PostgresType>;
 
+declare global {
+  /**
+   * Cache a Postgres connection during development to avoid reconnecting on HMR.
+   */
+  var __pgConn: Sql<DefaultTypeMap> | undefined;
+}
+
 export type PostgresConnection = Sql<DefaultTypeMap>;
 
 export interface CreateConnectionOptions {
