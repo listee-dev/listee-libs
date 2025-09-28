@@ -6,7 +6,8 @@
   "catalog": {
     "drizzle-orm": "^0.40.0",
     "hono": "^4.4.4",
-    "postgres": "^3.4.5"
+    "postgres": "^3.4.5",
+    "jose": "^5.2.3"
   },
   "workspaces": [
     "packages/*"

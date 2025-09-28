@@ -7,4 +7,5 @@ export type {
 export {
   AuthenticationError,
   createHeaderAuthentication,
+  createSupabaseAuthentication,
 } from "./authentication/index.js";
