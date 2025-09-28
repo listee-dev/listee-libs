@@ -12,13 +12,14 @@ This monorepo uses Bun workspaces. Each package lives in `packages/<name>` with 
 ## Build, Test, and Development Commands
 - `bun install` — Sync dependencies and respect the lockfile used in CI.
 - `bun run build` — Run the TypeScript project references build, emitting artifacts to every `dist/` folder.
-- `bun run lint` — Execute Biome formatter and linter in a single pass.
+- `bun run lint` — Execute Biome formatter and linter in a single pass (only `packages/*/src/**` is scanned via `files.includes`).
 - `bun test` or `bun run test` — Execute Bun's built-in test runner across the workspace (see `packages/db/src/index.test.ts` for examples).
 - `bun run changeset` — Draft release notes and version bumps via Changesets.
 - `bun run clean` — Remove build artifacts and reinstall dependencies (does not delete untracked source files).
 
 ## Coding Style & Naming Conventions
 TypeScript runs with `strict` enabled; avoid implicit `any` and replace `as` casts with dedicated type guards or the `satisfies` operator where appropriate. Prefer `unknown` for external inputs. Use kebab-case for package folders, PascalCase for types and enums, and camelCase for variables and functions. Always commit the formatter output produced by `bun run lint`.
+All source comments, test names, and test descriptions must be written in English.
 
 ## Testing Guidelines
 Use Bun's built-in test runner. Co-locate tests as `*.test.ts` files or inside `__tests__/`. Name suites with behavior-focused sentences so failures highlight intent. For new features, cover both success paths and the most representative error paths. Run `bun test` (and `bun run build` when touching types) before opening a PR.
@@ -36,5 +37,6 @@ Enable secret scanning and push protection in CI (e.g., gitleaks), and require n
 - `queries` compose the necessary `services` and `repositories` per use case. Inject dependencies through factories so tests can swap in mocks easily.
 - `services` may depend on `repositories`, but repositories must never depend on services. Extract complex domain logic into dedicated modules and keep the service layer thin.
 - `repositories` encapsulate external SDK, SQL, or KV access and return plain or domain-specific types (`string`, `Date`, structured objects) to callers.
-- Separate authentication and authorization concerns inside `packages/auth`. Place runtime-specific adapters under `authentication/` and domain policies under `authorization/` (e.g., `policies/chat.ts` exposing `canAccessChat`). Policies can declare repository interfaces and receive concrete implementations via dependency injection.
+- Separate authentication and authorization concerns inside `packages/auth`. Place runtime-specific adapters under `authentication/` (`header.ts`, `supabase.ts`, shared utilities, and `errors.ts`) and domain policies under `authorization/` (e.g., `policies/chat.ts` exposing `canAccessChat`). Policies can declare repository interfaces and receive concrete implementations via dependency injection.
+- Supabase JWT verification is handled by `createSupabaseAuthentication`, which fetches the JWKS from `.well-known/jwks.json`; only extend this provider via dedicated modules so JWKS caching and claim validation remain centralized.
 - Process authenticated requests in the order `Route Handler → Authentication → Queries → Authorization → Services/Repositories`, passing the authenticated actor into queries before evaluating policies.
