@@ -30,10 +30,16 @@ export function registerHealthRoutes(
         503,
       );
     } catch (error) {
+      console.error("Database health check failed", error);
+      const isProduction = process.env.NODE_ENV === "production";
+      const errorMessage = isProduction
+        ? "Internal server error"
+        : toErrorMessage(error);
+
       return context.json(
         {
           status: "error",
-          error: toErrorMessage(error),
+          error: errorMessage,
         },
         500,
       );
