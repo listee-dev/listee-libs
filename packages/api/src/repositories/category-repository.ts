@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Database } from "@listee/db";
 import { categories } from "@listee/db";
 import type {
@@ -7,19 +8,42 @@ import type {
   ListCategoriesRepositoryParams,
   PaginatedResult,
 } from "@listee/types";
-import { and, desc, eq, lt } from "drizzle-orm";
+import { and, desc, eq, lt, or } from "drizzle-orm";
 
-function parseCursor(value: string | null | undefined): Date | null {
+interface CategoryCursorPayload {
+  readonly createdAt: string;
+  readonly id: string;
+}
+
+interface CategoryCursor {
+  readonly createdAt: Date;
+  readonly id: string;
+}
+
+function parseCursor(value: string | null | undefined): CategoryCursor | null {
   if (value === undefined || value === null || value.length === 0) {
     return null;
   }
 
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
+  try {
+    const decoded = Buffer.from(value, "base64url").toString("utf8");
+    const payload = JSON.parse(decoded) as CategoryCursorPayload;
+    if (
+      typeof payload.createdAt !== "string" ||
+      typeof payload.id !== "string"
+    ) {
+      return null;
+    }
+
+    const createdAt = new Date(payload.createdAt);
+    if (Number.isNaN(createdAt.getTime())) {
+      return null;
+    }
+
+    return { createdAt, id: payload.id };
+  } catch {
     return null;
   }
-
-  return parsed;
 }
 
 export function createCategoryRepository(db: Database): CategoryRepository {
@@ -27,18 +51,27 @@ export function createCategoryRepository(db: Database): CategoryRepository {
     params: ListCategoriesRepositoryParams,
   ): Promise<PaginatedResult<Category>> {
     const baseCondition = eq(categories.createdBy, params.userId);
-    const cursorDate = parseCursor(params.cursor);
+    const cursor = parseCursor(params.cursor);
     const condition =
-      cursorDate === null
+      cursor === null
         ? baseCondition
-        : and(baseCondition, lt(categories.createdAt, cursorDate));
+        : and(
+            baseCondition,
+            or(
+              lt(categories.createdAt, cursor.createdAt),
+              and(
+                eq(categories.createdAt, cursor.createdAt),
+                lt(categories.id, cursor.id),
+              ),
+            ),
+          );
 
     const limit = params.limit;
     const rows = await db
       .select()
       .from(categories)
       .where(condition)
-      .orderBy(desc(categories.createdAt))
+      .orderBy(desc(categories.createdAt), desc(categories.id))
       .limit(limit + 1);
 
     const hasMore = rows.length > limit;
@@ -48,7 +81,14 @@ export function createCategoryRepository(db: Database): CategoryRepository {
     if (hasMore) {
       const lastItem = items[items.length - 1];
       if (lastItem !== undefined) {
-        nextCursor = lastItem.createdAt.toISOString();
+        const payload: CategoryCursorPayload = {
+          createdAt: lastItem.createdAt.toISOString(),
+          id: lastItem.id,
+        };
+
+        nextCursor = Buffer.from(JSON.stringify(payload), "utf8").toString(
+          "base64url",
+        );
       }
     }
 
