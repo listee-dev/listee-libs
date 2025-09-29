@@ -8,7 +8,13 @@ export function toErrorMessage(value: unknown): string {
   }
 
   try {
-    return JSON.stringify(value);
+    const serialized = JSON.stringify(value);
+
+    if (typeof serialized === "string") {
+      return serialized;
+    }
+
+    return "Unknown error";
   } catch {
     return "Unknown error";
   }
