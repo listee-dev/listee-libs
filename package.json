@@ -4,9 +4,9 @@
   "private": true,
   "packageManager": "bun@1.2.22",
   "catalog": {
-    "drizzle-orm": "^0.40.0",
+    "drizzle-orm": "^0.44.5",
     "hono": "^4.4.4",
-    "postgres": "^3.4.5",
+    "postgres": "^3.4.7",
     "jose": "^5.2.3"
   },
   "workspaces": [
