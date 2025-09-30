@@ -86,7 +86,7 @@ export const categories = pgTable(
         for: "update",
         to: authenticatedRole,
         using: isOwner,
-        withCheck: sql`true`,
+        withCheck: isOwner,
       }),
       pgPolicy("Users can delete their categories", {
         for: "delete",
@@ -143,7 +143,7 @@ export const tasks = pgTable(
         for: "update",
         to: authenticatedRole,
         using: hasAccess,
-        withCheck: sql`true`,
+        withCheck: hasAccess,
       }),
       pgPolicy("Users can delete their tasks", {
         for: "delete",
