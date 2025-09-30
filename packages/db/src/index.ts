@@ -128,8 +128,18 @@ export function createPostgresConnection(
 
 export type Database = PostgresJsDatabase<Record<string, unknown>>;
 
-const defaultConnection = createPostgresConnection();
-export const db: Database = drizzle(defaultConnection);
+let cachedDatabase: Database | null = null;
+
+export function getDb(): Database {
+  if (cachedDatabase !== null) {
+    return cachedDatabase;
+  }
+
+  const connection = createPostgresConnection();
+  const database = drizzle(connection);
+  cachedDatabase = database;
+  return database;
+}
 
 function sanitizeRole(role: unknown): string {
   if (typeof role === "string" && /^[A-Za-z0-9_]+$/.test(role)) {
@@ -166,7 +176,7 @@ export function createRlsClient(
   token: SupabaseToken,
   options?: CreateRlsClientOptions,
 ): RlsClient {
-  const database = options?.database ?? db;
+  const database = options?.database ?? getDb();
   const sanitizedRole = sanitizeRole(token.role);
   const serializedToken = JSON.stringify(token);
   const subject = typeof token.sub === "string" ? token.sub : "";
