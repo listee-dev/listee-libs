@@ -3,7 +3,7 @@ import type {
   AuthenticationProvider,
   AuthenticationResult,
   HeaderAuthenticationOptions,
-  SupabaseToken,
+  HeaderToken,
 } from "@listee/types";
 import { extractAuthorizationToken } from "./shared.js";
 
@@ -18,9 +18,10 @@ export function createHeaderAuthentication(
   ): Promise<AuthenticationResult> {
     const tokenValue = extractAuthorizationToken(context, headerName, scheme);
 
-    const token: SupabaseToken = {
-      sub: tokenValue,
-      role: "authenticated",
+    const token: HeaderToken = {
+      type: "header",
+      scheme,
+      value: tokenValue,
     };
 
     return {

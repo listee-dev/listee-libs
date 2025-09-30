@@ -1,8 +1,16 @@
 import type { SupabaseToken } from "./db";
 
+export interface HeaderToken {
+  readonly type: "header";
+  readonly scheme: string;
+  readonly value: string;
+}
+
+export type AuthenticatedToken = SupabaseToken | HeaderToken;
+
 export interface AuthenticatedUser {
   readonly id: string;
-  readonly token: SupabaseToken;
+  readonly token: AuthenticatedToken;
 }
 
 export interface AuthenticationContext {
