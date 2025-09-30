@@ -4,12 +4,11 @@ import postgres, { type Options, type PostgresType, type Sql } from "postgres";
 
 type DefaultTypeMap = Record<string, PostgresType>;
 
-declare global {
-  /**
-   * Cache a Postgres connection during development to avoid reconnecting on HMR.
-   */
-  var __pgConn: Sql<DefaultTypeMap> | undefined;
-}
+const GLOBAL_CACHE_PROPERTY = "__listeePgConnections" as const;
+
+type GlobalWithPgCache = typeof globalThis & {
+  [GLOBAL_CACHE_PROPERTY]?: Map<string, PostgresConnection>;
+};
 
 export type PostgresConnection = Sql<DefaultTypeMap>;
 
@@ -52,31 +51,79 @@ function createNewConnection(
   return postgres(connectionString, baseOptions);
 }
 
+const localConnectionCache = new Map<string, PostgresConnection>();
+
+function createCacheKey(
+  connectionString: string,
+  options?: CreateConnectionOptions,
+): string {
+  if (options?.postgresOptions === undefined) {
+    return connectionString;
+  }
+
+  try {
+    return `${connectionString}|${JSON.stringify(options.postgresOptions)}`;
+  } catch {
+    return `${connectionString}|${String(options.postgresOptions)}`;
+  }
+}
+
+function getCachedConnection(key: string): PostgresConnection | undefined {
+  const cachedLocally = localConnectionCache.get(key);
+  if (cachedLocally !== undefined) {
+    return cachedLocally;
+  }
+
+  if (typeof globalThis !== "undefined") {
+    const cache = (globalThis as GlobalWithPgCache)[GLOBAL_CACHE_PROPERTY];
+    return cache?.get(key);
+  }
+
+  return undefined;
+}
+
+function storeConnectionInCache(
+  key: string,
+  connection: PostgresConnection,
+): void {
+  localConnectionCache.set(key, connection);
+
+  if (process.env.NODE_ENV === "production") {
+    return;
+  }
+
+  if (typeof globalThis === "undefined") {
+    return;
+  }
+
+  const globalObject = globalThis as GlobalWithPgCache;
+
+  if (globalObject[GLOBAL_CACHE_PROPERTY] === undefined) {
+    globalObject[GLOBAL_CACHE_PROPERTY] = new Map<string, PostgresConnection>();
+  }
+
+  globalObject[GLOBAL_CACHE_PROPERTY]?.set(key, connection);
+}
+
 export function createPostgresConnection(
   options?: CreateConnectionOptions,
 ): PostgresConnection {
   const connectionString = resolveConnectionString(options);
+  const cacheKey = createCacheKey(connectionString, options);
 
   if (!shouldReuseConnection(options)) {
     return createNewConnection(connectionString, options);
   }
 
-  if (typeof globalThis !== "undefined") {
-    const cached = globalThis.__pgConn;
-    if (cached) {
-      return cached;
-    }
-
-    const connection = createNewConnection(connectionString, options);
-
-    if (process.env.NODE_ENV !== "production") {
-      globalThis.__pgConn = connection;
-    }
-
-    return connection;
+  const cached = getCachedConnection(cacheKey);
+  if (cached !== undefined) {
+    return cached;
   }
 
-  return createNewConnection(connectionString, options);
+  const connection = createNewConnection(connectionString, options);
+  storeConnectionInCache(cacheKey, connection);
+
+  return connection;
 }
 
 export type Database = PostgresJsDatabase<Record<string, unknown>>;

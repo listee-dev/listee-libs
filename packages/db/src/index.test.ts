@@ -36,6 +36,7 @@ let connectionCounter = 0;
 
 const transactionRecords: Array<TransactionRecord> = [];
 const rawValues: Array<unknown> = [];
+let connectionNamespace = 0;
 
 function sqlTag(
   strings: TemplateStringsArray,
@@ -118,8 +119,8 @@ beforeEach(() => {
   postgresCalls.splice(0, postgresCalls.length);
   transactionRecords.splice(0, transactionRecords.length);
   rawValues.splice(0, rawValues.length);
-  process.env.POSTGRES_URL = "postgres://test";
-  globalThis.__pgConn = undefined;
+  connectionNamespace += 1;
+  process.env.POSTGRES_URL = `postgres://test-${connectionNamespace}`;
 });
 
 describe("createPostgresConnection", () => {
@@ -139,6 +140,18 @@ describe("createPostgresConnection", () => {
     expect(next).not.toBe(initial);
   });
 
+  test("creates distinct cached connections per configuration", () => {
+    const first = createPostgresConnection({
+      connectionString: `postgres://one-${connectionNamespace}`,
+    });
+    const second = createPostgresConnection({
+      connectionString: `postgres://two-${connectionNamespace}`,
+    });
+
+    expect(postgresCalls.length).toBe(2);
+    expect(second).not.toBe(first);
+  });
+
   test("throws when no connection string can be resolved", () => {
     process.env.POSTGRES_URL = "";
 
@@ -148,7 +161,7 @@ describe("createPostgresConnection", () => {
   });
 
   test("honors an explicit connection string", () => {
-    const explicit = "postgres://override";
+    const explicit = `postgres://override-${connectionNamespace}`;
     createPostgresConnection({ connectionString: explicit });
 
     expect(postgresCalls[0]?.url).toBe(explicit);
