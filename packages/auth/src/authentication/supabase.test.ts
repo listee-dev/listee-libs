@@ -50,7 +50,7 @@ describe("createSupabaseAuthentication", () => {
         },
       });
 
-      expect(helper.provider.authenticate({ request })).rejects.toThrow(
+      await expect(helper.provider.authenticate({ request })).rejects.toThrow(
         AuthenticationError,
       );
     } finally {
@@ -66,7 +66,7 @@ describe("createSupabaseAuthentication", () => {
     try {
       const request = new Request("https://example.com/api");
 
-      expect(helper.provider.authenticate({ request })).rejects.toThrow(
+      await expect(helper.provider.authenticate({ request })).rejects.toThrow(
         AuthenticationError,
       );
     } finally {
