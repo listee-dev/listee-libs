@@ -66,7 +66,16 @@ export function createCategoryRepository(db: Database): CategoryRepository {
             ),
           );
 
-    const limit = params.limit;
+    const rawLimit = Math.trunc(params.limit);
+    if (!Number.isFinite(rawLimit) || rawLimit <= 0) {
+      return {
+        items: [],
+        nextCursor: null,
+        hasMore: false,
+      };
+    }
+
+    const limit = rawLimit;
     const rows = await db
       .select()
       .from(categories)
