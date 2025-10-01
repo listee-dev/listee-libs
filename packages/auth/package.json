@@ -10,7 +10,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc --project tsconfig.json",
+    "build": "tsc --project tsconfig.build.json",
     "clean": "rm -rf dist"
   },
   "dependencies": {
