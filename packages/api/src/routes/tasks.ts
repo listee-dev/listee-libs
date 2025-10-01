@@ -1,10 +1,6 @@
-import { AuthenticationError } from "@listee/auth";
-import type {
-  AuthenticationProvider,
-  AuthenticationResult,
-  RegisterTaskRoutesOptions,
-} from "@listee/types";
+import type { RegisterTaskRoutesOptions } from "@listee/types";
 import type { Hono } from "hono";
+import { tryAuthenticate } from "./auth-utils.js";
 
 interface TaskResponse {
   readonly id: string;
@@ -86,19 +82,4 @@ export function registerTaskRoutes(
 
     return context.json({ data: toTaskResponse(task) });
   });
-}
-
-async function tryAuthenticate(
-  provider: AuthenticationProvider,
-  request: Request,
-): Promise<AuthenticationResult | null> {
-  try {
-    return await provider.authenticate({ request });
-  } catch (error) {
-    if (error instanceof AuthenticationError) {
-      return null;
-    }
-
-    throw error;
-  }
 }

@@ -1,10 +1,6 @@
-import { AuthenticationError } from "@listee/auth";
-import type {
-  AuthenticationProvider,
-  AuthenticationResult,
-  RegisterCategoryRoutesOptions,
-} from "@listee/types";
+import type { RegisterCategoryRoutesOptions } from "@listee/types";
 import type { Hono } from "hono";
+import { tryAuthenticate } from "./auth-utils.js";
 
 interface CategoryResponse {
   readonly id: string;
@@ -121,19 +117,4 @@ export function registerCategoryRoutes(
 
     return context.json({ data: toCategoryResponse(category) });
   });
-}
-
-async function tryAuthenticate(
-  provider: AuthenticationProvider,
-  request: Request,
-): Promise<AuthenticationResult | null> {
-  try {
-    return await provider.authenticate({ request });
-  } catch (error) {
-    if (error instanceof AuthenticationError) {
-      return null;
-    }
-
-    throw error;
-  }
 }
