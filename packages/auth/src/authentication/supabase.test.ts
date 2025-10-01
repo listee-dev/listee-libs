@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import type { SupabaseAuthenticationOptions } from "@listee/types";
+import type {
+  AuthenticatedToken,
+  SupabaseAuthenticationOptions,
+  SupabaseToken,
+} from "@listee/types";
 import { exportJWK, generateKeyPair, SignJWT } from "jose";
 import { AuthenticationError, createSupabaseAuthentication } from "./index.js";
 
@@ -24,6 +28,7 @@ describe("createSupabaseAuthentication", () => {
 
       const result = await helper.provider.authenticate({ request });
 
+      assertSupabaseToken(result.user.token);
       expect(result.user.id).toBe("user-123");
       expect(result.user.token.sub).toBe("user-123");
       expect(result.user.token.role).toBe("authenticated");
@@ -162,6 +167,21 @@ async function createSupabaseTestHelper(
   }
 
   return { provider, signToken, restore };
+}
+
+function assertSupabaseToken(
+  token: AuthenticatedToken,
+): asserts token is SupabaseToken {
+  if (
+    typeof token === "object" &&
+    token !== null &&
+    "sub" in token &&
+    "role" in token
+  ) {
+    return;
+  }
+
+  throw new Error("Expected Supabase token in authentication result");
 }
 
 function resolveRequestUrl(input: RequestInfo | URL): string {
