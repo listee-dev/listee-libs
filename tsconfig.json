@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@listee/auth": ["packages/auth/src/index.ts"],
+      "@listee/db": ["packages/db/src/index.ts"],
+      "@listee/api": ["packages/api/src/index.ts"],
+      "@listee/types": ["packages/types/src/index.ts"]
+    }
+  }
+}
