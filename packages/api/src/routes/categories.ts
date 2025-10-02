@@ -45,8 +45,12 @@ function parsePositiveInteger(value: string | undefined): number | undefined {
     return undefined;
   }
 
+  if (!/^[1-9]\d*$/.test(value)) {
+    return undefined;
+  }
+
   const parsed = Number.parseInt(value, 10);
-  if (Number.isNaN(parsed) || parsed <= 0) {
+  if (parsed <= 0) {
     return undefined;
   }
 
