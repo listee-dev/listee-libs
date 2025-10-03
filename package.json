@@ -15,10 +15,14 @@
   "scripts": {
     "lint": "biome check",
     "lint:fix": "biome check --write",
-    "test": "bun test"
+    "test": "bun test",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
+    "@changesets/cli": "^2.29.7",
     "@types/bun": "1.2.22"
   }
 }
