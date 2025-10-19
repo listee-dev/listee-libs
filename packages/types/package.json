@@ -9,7 +9,7 @@
   "scripts": {
     "clean": "rimraf dist",
     "build": "tsc --project tsconfig.build.json",
-    "postbuild": "cp package.json dist/"
+    "postbuild": "node ../../scripts/write-dist-manifest.mjs"
   },
   "dependencies": {
     "@listee/db": "workspace:^"
