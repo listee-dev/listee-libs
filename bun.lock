@@ -5,9 +5,9 @@
       "name": "listee-libs",
       "devDependencies": {
         "@biomejs/biome": "2.2.4",
-        "@changesets/cli": "^2.29.7",
+        "@changesets/cli": "2.29.7",
         "@types/bun": "1.2.22",
-        "turbo": "^2.5.8",
+        "turbo": "2.5.8",
         "typescript": "5.6.3",
       },
     },
