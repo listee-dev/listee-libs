@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres, { type Options, type PostgresType, type Sql } from "postgres";
+import { fileURLToPath } from "url";
 
 type DefaultTypeMap = Record<string, PostgresType>;
 
@@ -217,6 +218,6 @@ export { and, desc, eq, lt, or, sql } from "drizzle-orm";
 
 export * from "./schema/index.js";
 
-const schemaModuleUrl = new URL("./schema/index.js", import.meta.url);
-
-export const schemaPath = schemaModuleUrl.pathname;
+export const schemaPath = fileURLToPath(
+  new URL("./schema/index.js", import.meta.url),
+);
