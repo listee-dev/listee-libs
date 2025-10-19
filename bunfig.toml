@@ -1,5 +1,0 @@
-[alias]
-"@listee/api" = "./packages/api/src/index.ts"
-"@listee/auth" = "./packages/auth/src/index.ts"
-"@listee/db" = "./packages/db/src/index.ts"
-"@listee/types" = "./packages/types/src/index.ts"
