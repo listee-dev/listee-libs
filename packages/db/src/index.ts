@@ -213,7 +213,7 @@ export function createDrizzle(
   return createRlsClient(token, options);
 }
 
-export { sql } from "drizzle-orm";
+export { and, desc, eq, lt, or, sql } from "drizzle-orm";
 
 export * from "./schema/index.js";
 

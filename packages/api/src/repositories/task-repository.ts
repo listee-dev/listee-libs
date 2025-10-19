@@ -1,12 +1,11 @@
 import type { Database } from "@listee/db";
-import { tasks } from "@listee/db";
+import { eq, tasks } from "@listee/db";
 import type {
   FindTaskRepositoryParams,
   ListTasksRepositoryParams,
   Task,
   TaskRepository,
 } from "@listee/types";
-import { eq } from "drizzle-orm";
 
 export function createTaskRepository(db: Database): TaskRepository {
   async function listByCategory(

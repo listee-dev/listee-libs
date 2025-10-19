@@ -1,6 +1,6 @@
 import { Buffer } from "node:buffer";
 import type { Database } from "@listee/db";
-import { categories } from "@listee/db";
+import { and, categories, desc, eq, lt, or } from "@listee/db";
 import type {
   Category,
   CategoryRepository,
@@ -8,7 +8,6 @@ import type {
   ListCategoriesRepositoryParams,
   PaginatedResult,
 } from "@listee/types";
-import { and, desc, eq, lt, or } from "drizzle-orm";
 
 interface CategoryCursorPayload {
   readonly createdAt: string;
@@ -20,13 +19,32 @@ interface CategoryCursor {
   readonly id: string;
 }
 
+function decodeBase64Url(value: string): Buffer | null {
+  const base64Characters = value.replace(/-/g, "+").replace(/_/g, "/");
+  const remainder = base64Characters.length % 4;
+  const normalized =
+    remainder === 0
+      ? base64Characters
+      : `${base64Characters}${"====".slice(remainder)}`;
+
+  try {
+    return Buffer.from(normalized, "base64");
+  } catch {
+    return null;
+  }
+}
+
 function parseCursor(value: string | null | undefined): CategoryCursor | null {
   if (value === undefined || value === null || value.length === 0) {
     return null;
   }
 
   try {
-    const decoded = Buffer.from(value, "base64url").toString("utf8");
+    const decodedBuffer = decodeBase64Url(value);
+    if (decodedBuffer === null) {
+      return null;
+    }
+    const decoded = decodedBuffer.toString("utf8");
     const payload = JSON.parse(decoded) as CategoryCursorPayload;
     if (
       typeof payload.createdAt !== "string" ||
