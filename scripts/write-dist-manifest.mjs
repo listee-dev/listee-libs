@@ -51,35 +51,59 @@ const sourceManifestPath = resolve(packageRoot, "package.json");
 const distDirectory = resolve(packageRoot, distFolderName);
 const distManifestPath = resolve(distDirectory, "package.json");
 
-const rawManifest = await readFile(sourceManifestPath, "utf8");
-const manifest = JSON.parse(rawManifest);
+const getErrorMessage = (value) => {
+  if (value instanceof Error) {
+    return value.message;
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return "Unknown error";
+  }
+};
 
-const distManifest = { ...manifest };
+try {
+  const rawManifest = await readFile(sourceManifestPath, "utf8");
+  const manifest = JSON.parse(rawManifest);
 
-distManifest.main =
-  distManifest.main !== undefined
-    ? normalizeEntryPoint(distManifest.main)
-    : "./index.js";
+  const distManifest = { ...manifest };
 
-if (distManifest.module !== undefined) {
-  distManifest.module = normalizeEntryPoint(distManifest.module);
+  distManifest.main =
+    distManifest.main !== undefined
+      ? normalizeEntryPoint(distManifest.main)
+      : "./index.js";
+
+  if (distManifest.module !== undefined) {
+    distManifest.module = normalizeEntryPoint(distManifest.module);
+  }
+
+  if (distManifest.types !== undefined) {
+    distManifest.types = normalizeEntryPoint(distManifest.types);
+  }
+
+  if (distManifest.typings !== undefined) {
+    distManifest.typings = normalizeEntryPoint(distManifest.typings);
+  }
+
+  if (distManifest.exports !== undefined) {
+    distManifest.exports = normalizeExports(distManifest.exports);
+  }
+
+  delete distManifest.scripts;
+  delete distManifest.files;
+
+  await mkdir(distDirectory, { recursive: true });
+  const serialized = `${JSON.stringify(distManifest, null, 2)}\n`;
+  await writeFile(distManifestPath, serialized);
+  console.log(`✔️ Generated ${distManifestPath}`);
+} catch (error) {
+  console.error(
+    `Failed to generate dist manifest for ${packageRoot}: ${getErrorMessage(
+      error,
+    )}`,
+  );
+  process.exit(1);
 }
-
-if (distManifest.types !== undefined) {
-  distManifest.types = normalizeEntryPoint(distManifest.types);
-}
-
-if (distManifest.typings !== undefined) {
-  distManifest.typings = normalizeEntryPoint(distManifest.typings);
-}
-
-if (distManifest.exports !== undefined) {
-  distManifest.exports = normalizeExports(distManifest.exports);
-}
-
-delete distManifest.scripts;
-delete distManifest.files;
-
-await mkdir(distDirectory, { recursive: true });
-const serialized = `${JSON.stringify(distManifest, null, 2)}\n`;
-await writeFile(distManifestPath, serialized);
