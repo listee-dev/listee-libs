@@ -213,6 +213,10 @@ export function createDrizzle(
   return createRlsClient(token, options);
 }
 
-export { sql } from "drizzle-orm";
+export { and, desc, eq, lt, or, sql } from "drizzle-orm";
 
 export * from "./schema/index.js";
+
+const schemaModuleUrl = new URL("./schema/index.js", import.meta.url);
+
+export const schemaPath = schemaModuleUrl.pathname;

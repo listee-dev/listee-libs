@@ -18,11 +18,16 @@
     "test": "bun test",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "changeset publish"
+    "release": "changeset publish",
+    "build": "turbo run build",
+    "clean": "turbo run clean"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
-    "@changesets/cli": "^2.29.7",
-    "@types/bun": "1.2.22"
+    "@changesets/cli": "2.29.7",
+    "@types/bun": "1.2.22",
+    "rimraf": "6.0.1",
+    "turbo": "2.5.8",
+    "typescript": "5.6.3"
   }
 }

@@ -1,4 +1,13 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["dist", "src/**/*.test.ts"]
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true,
+    "paths": {
+      "@listee/auth": ["../auth/dist"],
+      "@listee/db": ["../db/dist"],
+      "@listee/types": ["../types/dist"]
+    }
+  },
+  "include": ["src/**/*"]
 }

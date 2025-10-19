@@ -1,13 +1,17 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "declaration": true,
-    "declarationMap": true,
     "outDir": "dist",
-    "rootDirs": ["src", "../db/src", "../auth/src", "../types/src"],
+    "rootDir": "src",
     "verbatimModuleSyntax": true,
-    "types": ["@types/bun"]
+    "moduleResolution": "Bundler",
+    "types": ["@types/bun"],
+    "paths": {
+      "@listee/auth": ["../auth/src"],
+      "@listee/db": ["../db/src"],
+      "@listee/types": ["../types/src"]
+    }
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts"],
-  "exclude": ["dist"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["dist", "**/*.test.ts", "**/__tests__/**"]
 }
