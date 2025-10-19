@@ -72,6 +72,31 @@ mock.module("postgres", () => ({
 
 mock.module("drizzle-orm", () => ({
   sql: sqlTag,
+  eq: (...values: Array<unknown>) => ({
+    kind: "predicate",
+    operator: "eq",
+    values,
+  }),
+  and: (...values: Array<unknown>) => ({
+    kind: "predicate",
+    operator: "and",
+    values,
+  }),
+  or: (...values: Array<unknown>) => ({
+    kind: "predicate",
+    operator: "or",
+    values,
+  }),
+  lt: (...values: Array<unknown>) => ({
+    kind: "predicate",
+    operator: "lt",
+    values,
+  }),
+  desc: (value: unknown) => ({
+    kind: "order",
+    direction: "desc",
+    value,
+  }),
 }));
 
 mock.module("drizzle-orm/postgres-js", () => ({
