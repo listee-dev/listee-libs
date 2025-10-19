@@ -10,10 +10,10 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@listee/auth": ["packages/auth/src/index.ts"],
-      "@listee/db": ["packages/db/src/index.ts"],
-      "@listee/api": ["packages/api/src/index.ts"],
-      "@listee/types": ["packages/types/src/index.ts"]
+      "@listee/auth": ["packages/auth/src"],
+      "@listee/db": ["packages/db/src"],
+      "@listee/api": ["packages/api/src"],
+      "@listee/types": ["packages/types/src"]
     }
   }
 }

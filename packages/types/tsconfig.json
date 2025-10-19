@@ -1,11 +1,14 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "declaration": true,
-    "declarationMap": true,
     "outDir": "dist",
-    "verbatimModuleSyntax": true
+    "rootDir": "src",
+    "verbatimModuleSyntax": true,
+    "moduleResolution": "Bundler",
+    "paths": {
+      "@listee/db": ["../db/src"]
+    }
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["dist"]
+  "exclude": ["dist", "**/*.test.ts", "**/__tests__/**"]
 }

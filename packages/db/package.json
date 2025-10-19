@@ -3,15 +3,13 @@
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
-  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "sideEffects": false,
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
+    "clean": "rm -rf dist",
     "build": "tsc --project tsconfig.build.json",
-    "clean": "rm -rf dist"
+    "postbuild": "node ../../scripts/write-dist-manifest.mjs"
   },
   "dependencies": {
     "drizzle-orm": "catalog:",
