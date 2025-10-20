@@ -82,27 +82,18 @@ export function createAccountProvisioner(
         })
         .onConflictDoNothing();
 
-      const existing = await tx
-        .select({ id: categories.id })
-        .from(categories)
-        .where(
-          and(
-            eq(categories.createdBy, params.userId),
-            eq(categories.kind, defaultCategoryKind),
-          ),
-        )
-        .limit(1);
-
-      if (existing.length > 0) {
-        return;
-      }
-
-      await tx.insert(categories).values({
-        name: defaultCategoryName,
-        kind: defaultCategoryKind,
-        createdBy: params.userId,
-        updatedBy: params.userId,
-      });
+      await tx
+        .insert(categories)
+        .values({
+          name: defaultCategoryName,
+          kind: defaultCategoryKind,
+          createdBy: params.userId,
+          updatedBy: params.userId,
+        })
+        .onConflictDoNothing({
+          target: [categories.createdBy, categories.name],
+          where: eq(categories.kind, defaultCategoryKind),
+        });
     });
   }
 
