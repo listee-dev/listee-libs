@@ -10,6 +10,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { authenticatedRole } from "drizzle-orm/supabase";
+import { DEFAULT_CATEGORY_KIND } from "../constants/category";
 
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true })
@@ -96,7 +97,7 @@ export const categories = pgTable(
       }),
       uniqueIndex("categories_system_name_idx")
         .on(table.createdBy, table.name)
-        .where(eq(table.kind, "system")),
+        .where(eq(table.kind, DEFAULT_CATEGORY_KIND)),
     ];
   },
 );
