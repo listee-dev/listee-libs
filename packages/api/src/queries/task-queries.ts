@@ -1,4 +1,5 @@
 import type {
+  CreateTaskParams,
   FindTaskParams,
   ListTasksParams,
   TaskQueries,
@@ -22,8 +23,19 @@ export function createTaskQueries(
     });
   }
 
+  async function create(params: CreateTaskParams) {
+    return dependencies.service.create({
+      categoryId: params.categoryId,
+      userId: params.userId,
+      name: params.name,
+      description: params.description,
+      isChecked: params.isChecked,
+    });
+  }
+
   return {
     listByCategory,
     findById,
+    create,
   };
 }

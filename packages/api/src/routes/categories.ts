@@ -1,5 +1,7 @@
 import type { RegisterCategoryRoutesOptions } from "@listee/types";
 import type { Hono } from "hono";
+import { toErrorMessage } from "../utils/error.js";
+import { isNonEmptyString, isRecord } from "../utils/validation.js";
 import { tryAuthenticate } from "./auth-utils.js";
 
 interface CategoryResponse {
@@ -17,6 +19,31 @@ interface ListCategoriesResponse {
   readonly meta: {
     readonly nextCursor: string | null;
     readonly hasMore: boolean;
+  };
+}
+
+interface CreateCategoryPayload {
+  readonly name: string;
+  readonly kind: string;
+}
+
+function parseCreateCategoryPayload(
+  value: unknown,
+): CreateCategoryPayload | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const nameValue = value.name;
+  const kindValue = value.kind;
+
+  if (!isNonEmptyString(nameValue) || !isNonEmptyString(kindValue)) {
+    return null;
+  }
+
+  return {
+    name: nameValue.trim(),
+    kind: kindValue.trim(),
   };
 }
 
@@ -120,5 +147,41 @@ export function registerCategoryRoutes(
     }
 
     return context.json({ data: toCategoryResponse(category) });
+  });
+
+  app.post("/users/:userId/categories", async (context) => {
+    const authResult = await tryAuthenticate(authentication, context.req.raw);
+    if (authResult === null) {
+      return context.json({ error: "Unauthorized" }, 401);
+    }
+
+    const userId = context.req.param("userId");
+    if (authResult.user.id !== userId) {
+      return context.json({ error: "Forbidden" }, 403);
+    }
+
+    let payloadSource: unknown;
+    try {
+      payloadSource = await context.req.json();
+    } catch {
+      return context.json({ error: "Invalid JSON body" }, 400);
+    }
+
+    const payload = parseCreateCategoryPayload(payloadSource);
+    if (payload === null) {
+      return context.json({ error: "Invalid request body" }, 400);
+    }
+
+    try {
+      const category = await queries.create({
+        userId,
+        name: payload.name,
+        kind: payload.kind,
+      });
+
+      return context.json({ data: toCategoryResponse(category) }, 201);
+    } catch (error) {
+      return context.json({ error: toErrorMessage(error) }, 500);
+    }
   });
 }

@@ -1,5 +1,7 @@
 import type { RegisterTaskRoutesOptions } from "@listee/types";
 import type { Hono } from "hono";
+import { toErrorMessage } from "../utils/error.js";
+import { isBoolean, isNonEmptyString, isRecord } from "../utils/validation.js";
 import { tryAuthenticate } from "./auth-utils.js";
 
 interface TaskResponse {
@@ -12,6 +14,47 @@ interface TaskResponse {
   readonly updatedBy: string;
   readonly createdAt: string;
   readonly updatedAt: string;
+}
+
+interface CreateTaskPayload {
+  readonly name: string;
+  readonly description: string | null;
+  readonly isChecked?: boolean;
+}
+
+function parseCreateTaskPayload(value: unknown): CreateTaskPayload | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const nameValue = value.name;
+  const descriptionValue = value.description;
+  const isCheckedValue = value.isChecked;
+
+  if (!isNonEmptyString(nameValue)) {
+    return null;
+  }
+
+  if (
+    descriptionValue !== undefined &&
+    descriptionValue !== null &&
+    typeof descriptionValue !== "string"
+  ) {
+    return null;
+  }
+
+  if (isCheckedValue !== undefined && !isBoolean(isCheckedValue)) {
+    return null;
+  }
+
+  const description =
+    typeof descriptionValue === "string" ? descriptionValue.trim() : null;
+
+  return {
+    name: nameValue.trim(),
+    description,
+    isChecked: isCheckedValue,
+  };
 }
 
 function toTaskResponse(task: {
@@ -44,6 +87,7 @@ export function registerTaskRoutes(
 ): void {
   const queries = options.queries;
   const authentication = options.authentication;
+  const categoryQueries = options.categoryQueries;
 
   if (queries === undefined || authentication === undefined) {
     return;
@@ -81,5 +125,56 @@ export function registerTaskRoutes(
     }
 
     return context.json({ data: toTaskResponse(task) });
+  });
+
+  app.post("/categories/:categoryId/tasks", async (context) => {
+    const authResult = await tryAuthenticate(authentication, context.req.raw);
+    if (authResult === null) {
+      return context.json({ error: "Unauthorized" }, 401);
+    }
+
+    const categoryId = context.req.param("categoryId");
+    const userId = authResult.user.id;
+
+    if (categoryQueries !== undefined) {
+      const category = await categoryQueries.findById({
+        categoryId,
+        userId,
+      });
+
+      if (category === null) {
+        return context.json({ error: "Not Found" }, 404);
+      }
+    }
+
+    let payloadSource: unknown;
+    try {
+      payloadSource = await context.req.json();
+    } catch {
+      return context.json({ error: "Invalid JSON body" }, 400);
+    }
+
+    const payload = parseCreateTaskPayload(payloadSource);
+    if (payload === null) {
+      return context.json({ error: "Invalid request body" }, 400);
+    }
+
+    try {
+      const task = await queries.create({
+        categoryId,
+        userId,
+        name: payload.name,
+        description: payload.description,
+        isChecked: payload.isChecked,
+      });
+
+      return context.json({ data: toTaskResponse(task) }, 201);
+    } catch (error) {
+      if (error instanceof Error && error.message === "Category not found") {
+        return context.json({ error: "Not Found" }, 404);
+      }
+
+      return context.json({ error: toErrorMessage(error) }, 500);
+    }
   });
 }

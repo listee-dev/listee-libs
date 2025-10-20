@@ -1,6 +1,7 @@
 import type {
   CategoryQueries,
   CategoryQueriesDependencies,
+  CreateCategoryParams,
   FindCategoryParams,
   ListCategoriesParams,
 } from "@listee/types";
@@ -25,8 +26,17 @@ export function createCategoryQueries(
     });
   }
 
+  async function create(params: CreateCategoryParams) {
+    return dependencies.service.create({
+      userId: params.userId,
+      name: params.name,
+      kind: params.kind,
+    });
+  }
+
   return {
     listByUserId,
     findById,
+    create,
   };
 }

@@ -15,6 +15,7 @@ export function createApp(dependencies: AppDependencies = {}): Hono {
   registerTaskRoutes(app, {
     queries: dependencies.taskQueries,
     authentication: dependencies.authentication,
+    categoryQueries: dependencies.categoryQueries,
   });
 
   return app;

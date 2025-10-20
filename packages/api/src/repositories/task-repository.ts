@@ -1,6 +1,7 @@
 import type { Database } from "@listee/db";
 import { eq, tasks } from "@listee/db";
 import type {
+  CreateTaskRepositoryParams,
   FindTaskRepositoryParams,
   ListTasksRepositoryParams,
   Task,
@@ -44,8 +45,30 @@ export function createTaskRepository(db: Database): TaskRepository {
     return task;
   }
 
+  async function create(params: CreateTaskRepositoryParams): Promise<Task> {
+    const rows = await db
+      .insert(tasks)
+      .values({
+        name: params.name,
+        description: params.description ?? null,
+        isChecked: params.isChecked,
+        categoryId: params.categoryId,
+        createdBy: params.createdBy,
+        updatedBy: params.updatedBy,
+      })
+      .returning();
+
+    const task = rows[0];
+    if (task === undefined) {
+      throw new Error("Failed to create task");
+    }
+
+    return task;
+  }
+
   return {
     listByCategory,
     findById,
+    create,
   };
 }

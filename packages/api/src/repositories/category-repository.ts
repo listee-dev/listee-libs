@@ -4,6 +4,7 @@ import { and, categories, desc, eq, lt, or } from "@listee/db";
 import type {
   Category,
   CategoryRepository,
+  CreateCategoryRepositoryParams,
   FindCategoryRepositoryParams,
   ListCategoriesRepositoryParams,
   PaginatedResult,
@@ -147,8 +148,30 @@ export function createCategoryRepository(db: Database): CategoryRepository {
     return category;
   }
 
+  async function create(
+    params: CreateCategoryRepositoryParams,
+  ): Promise<Category> {
+    const rows = await db
+      .insert(categories)
+      .values({
+        name: params.name,
+        kind: params.kind,
+        createdBy: params.createdBy,
+        updatedBy: params.updatedBy,
+      })
+      .returning();
+
+    const category = rows[0];
+    if (category === undefined) {
+      throw new Error("Failed to create category");
+    }
+
+    return category;
+  }
+
   return {
     listByUserId,
     findById,
+    create,
   };
 }
