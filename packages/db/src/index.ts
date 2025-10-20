@@ -215,9 +215,19 @@ export function createDrizzle(
 }
 
 export { and, desc, eq, lt, or, sql } from "drizzle-orm";
-
+export * from "./constants/category.js";
 export * from "./schema/index.js";
 
-const schemaModuleUrl = new URL("./schema/index.js", import.meta.url);
+function resolveSchemaPath(): string {
+  try {
+    const schemaUrl = new URL("./schema/index.js", import.meta.url);
+    if (schemaUrl.protocol === "file:") {
+      return fileURLToPath(schemaUrl);
+    }
+    return schemaUrl.pathname;
+  } catch {
+    return "./schema/index.js";
+  }
+}
 
-export const schemaPath = schemaModuleUrl.pathname;
+export const schemaPath = resolveSchemaPath();
