@@ -218,6 +218,6 @@ export { and, desc, eq, lt, or, sql } from "drizzle-orm";
 
 export * from "./schema/index.js";
 
-export const schemaPath = fileURLToPath(
-  new URL("./schema/index.js", import.meta.url),
-);
+const schemaModuleUrl = new URL("./schema/index.js", import.meta.url);
+
+export const schemaPath = schemaModuleUrl.pathname;
