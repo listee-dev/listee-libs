@@ -1,4 +1,5 @@
 import type {
+  AuthenticatedToken,
   AuthenticationContext,
   AuthenticationProvider,
   AuthenticationResult,
@@ -6,8 +7,18 @@ import type {
   SupabaseToken,
 } from "@listee/types";
 import { createRemoteJWKSet, type JWTVerifyOptions, jwtVerify } from "jose";
+import {
+  type AccountProvisioner,
+  type AccountProvisionerDependencies,
+  createAccountProvisioner,
+} from "../account/provision-account.js";
 import { AuthenticationError } from "./errors.js";
 import { assertNonEmptyString, extractAuthorizationToken } from "./shared.js";
+
+interface ProvisioningDependencies extends AccountProvisionerDependencies {
+  readonly accountProvisioner?: AccountProvisioner;
+  readonly authenticationProvider?: AuthenticationProvider;
+}
 
 function parseSupabaseProjectUrl(value: string): URL {
   const trimmed = value.trim();
@@ -106,4 +117,63 @@ export function createSupabaseAuthentication(
   }
 
   return { authenticate };
+}
+
+function extractEmailFromToken(token: SupabaseToken): string | null {
+  const emailValue = token.email;
+  if (typeof emailValue === "string") {
+    const trimmed = emailValue.trim();
+    if (trimmed.length > 0) {
+      return trimmed;
+    }
+  }
+
+  return null;
+}
+
+export function createProvisioningSupabaseAuthentication(
+  options: SupabaseAuthenticationOptions,
+  dependencies: ProvisioningDependencies = {},
+): AuthenticationProvider {
+  const baseProvider =
+    dependencies.authenticationProvider ??
+    createSupabaseAuthentication(options);
+
+  const accountProvisioner =
+    dependencies.accountProvisioner ??
+    createAccountProvisioner({
+      database: dependencies.database,
+      createRlsClient: dependencies.createRlsClient,
+      defaultCategoryName: dependencies.defaultCategoryName,
+      defaultCategoryKind: dependencies.defaultCategoryKind,
+    });
+
+  async function authenticate(
+    context: AuthenticationContext,
+  ): Promise<AuthenticationResult> {
+    const result = await baseProvider.authenticate(context);
+    if (!isSupabaseToken(result.user.token)) {
+      return result;
+    }
+
+    const email = extractEmailFromToken(result.user.token);
+
+    await accountProvisioner.provision({
+      userId: result.user.id,
+      token: result.user.token,
+      email,
+    });
+
+    return result;
+  }
+
+  return { authenticate };
+}
+
+function isSupabaseToken(token: AuthenticatedToken): token is SupabaseToken {
+  if (typeof token !== "object" || token === null) {
+    return false;
+  }
+
+  return "sub" in token;
 }

@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import {
   boolean,
@@ -6,9 +6,11 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 import { authenticatedRole } from "drizzle-orm/supabase";
+import { DEFAULT_CATEGORY_KIND } from "../constants/category";
 
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true })
@@ -93,6 +95,9 @@ export const categories = pgTable(
         to: authenticatedRole,
         using: isOwner,
       }),
+      uniqueIndex("categories_system_name_idx")
+        .on(table.createdBy, table.name)
+        .where(eq(table.kind, DEFAULT_CATEGORY_KIND)),
     ];
   },
 );
