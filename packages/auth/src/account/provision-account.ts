@@ -14,7 +14,7 @@ import {
   profiles,
 } from "@listee/db";
 
-interface ProvisionAccountParams {
+export interface ProvisionAccountParams {
   readonly userId: string;
   readonly token: SupabaseToken;
   readonly email?: string | null;

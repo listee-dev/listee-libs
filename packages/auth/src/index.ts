@@ -7,6 +7,7 @@ export type {
 export type {
   AccountProvisioner,
   AccountProvisionerDependencies,
+  ProvisionAccountParams,
 } from "./account/provision-account.js";
 export { createAccountProvisioner } from "./account/provision-account.js";
 export {
