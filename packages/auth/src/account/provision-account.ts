@@ -1,10 +1,10 @@
 import type { Database, RlsClient, RlsTransaction } from "@listee/db";
 import {
-  DEFAULT_CATEGORY_KIND,
-  DEFAULT_CATEGORY_NAME,
   and,
   categories,
   createRlsClient,
+  DEFAULT_CATEGORY_KIND,
+  DEFAULT_CATEGORY_NAME,
   eq,
   profiles,
 } from "@listee/db";
