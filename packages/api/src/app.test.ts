@@ -312,13 +312,7 @@ function createTaskQueries(): {
       const task = tasks.find((item) => item.id === taskId);
       return task ?? null;
     },
-    create: async ({
-      categoryId,
-      userId,
-      name,
-      description,
-      isChecked,
-    }) => {
+    create: async ({ categoryId, userId, name, description, isChecked }) => {
       const newTask = createTask({
         id: `task-${nextTaskId}`,
         categoryId,

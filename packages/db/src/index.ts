@@ -1,7 +1,7 @@
+import { fileURLToPath } from "node:url";
 import { sql } from "drizzle-orm";
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres, { type Options, type PostgresType, type Sql } from "postgres";
-import { fileURLToPath } from "url";
 
 type DefaultTypeMap = Record<string, PostgresType>;
 
