@@ -14,7 +14,7 @@
     },
     "packages/api": {
       "name": "@listee/api",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@listee/auth": "workspace:*",
         "@listee/db": "workspace:*",
@@ -24,15 +24,16 @@
     },
     "packages/auth": {
       "name": "@listee/auth",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
+        "@listee/db": "workspace:^",
         "@listee/types": "workspace:^",
         "jose": "catalog:",
       },
     },
     "packages/db": {
       "name": "@listee/db",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "drizzle-orm": "catalog:",
         "postgres": "catalog:",
@@ -40,7 +41,7 @@
     },
     "packages/types": {
       "name": "@listee/types",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@listee/db": "workspace:^",
       },

@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { sql } from "drizzle-orm";
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres, { type Options, type PostgresType, type Sql } from "postgres";
@@ -214,9 +215,8 @@ export function createDrizzle(
 }
 
 export { and, desc, eq, lt, or, sql } from "drizzle-orm";
-
+export * from "./constants/category.js";
 export * from "./schema/index.js";
 
-const schemaModuleUrl = new URL("./schema/index.js", import.meta.url);
-
-export const schemaPath = schemaModuleUrl.pathname;
+const schemaUrl = new URL("./schema/index.js", import.meta.url);
+export const schemaPath = fileURLToPath(schemaUrl.href);

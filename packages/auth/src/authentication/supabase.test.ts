@@ -1,11 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import type {
   AuthenticatedToken,
+  AuthenticationProvider,
+  HeaderToken,
   SupabaseAuthenticationOptions,
   SupabaseToken,
 } from "@listee/types";
 import { exportJWK, generateKeyPair, SignJWT } from "jose";
-import { AuthenticationError, createSupabaseAuthentication } from "./index.js";
+import {
+  AuthenticationError,
+  createProvisioningSupabaseAuthentication,
+  createSupabaseAuthentication,
+} from "./index.js";
 
 describe("createSupabaseAuthentication", () => {
   test("returns user when token is valid", async () => {
@@ -77,6 +83,127 @@ describe("createSupabaseAuthentication", () => {
     } finally {
       helper.restore();
     }
+  });
+});
+
+describe("createProvisioningSupabaseAuthentication", () => {
+  test("invokes account provisioner after authentication", async () => {
+    const token: SupabaseToken = {
+      sub: "user-789",
+      email: "user@example.com",
+    };
+
+    const baseProvider: AuthenticationProvider = {
+      async authenticate() {
+        return {
+          user: {
+            id: "user-789",
+            token,
+          },
+        };
+      },
+    };
+
+    const captured: Array<{ userId: string; email: string | null }> = [];
+
+    const authentication = createProvisioningSupabaseAuthentication(
+      { projectUrl: "https://example.supabase.co" },
+      {
+        authenticationProvider: baseProvider,
+        accountProvisioner: {
+          async provision(params) {
+            captured.push({
+              userId: params.userId,
+              email: params.email ?? null,
+            });
+          },
+        },
+      },
+    );
+
+    const request = new Request("https://example.com/api");
+    const result = await authentication.authenticate({ request });
+
+    expect(result.user.id).toBe("user-789");
+    expect(captured).toHaveLength(1);
+    expect(captured[0]).toEqual({
+      userId: "user-789",
+      email: "user@example.com",
+    });
+  });
+
+  test("passes null email when token does not include it", async () => {
+    const token: SupabaseToken = {
+      sub: "user-555",
+    };
+
+    const baseProvider: AuthenticationProvider = {
+      async authenticate() {
+        return {
+          user: {
+            id: "user-555",
+            token,
+          },
+        };
+      },
+    };
+
+    let received: string | null | undefined;
+
+    const authentication = createProvisioningSupabaseAuthentication(
+      { projectUrl: "https://example.supabase.co" },
+      {
+        authenticationProvider: baseProvider,
+        accountProvisioner: {
+          async provision(params) {
+            received = params.email ?? null;
+          },
+        },
+      },
+    );
+
+    const request = new Request("https://example.com/api");
+    await authentication.authenticate({ request });
+
+    expect(received).toBeNull();
+  });
+
+  test("skips provisioning when token is not a Supabase token", async () => {
+    const token: HeaderToken = {
+      type: "header",
+      scheme: "Bearer",
+      value: "opaque-token",
+    };
+
+    const baseProvider: AuthenticationProvider = {
+      async authenticate() {
+        return {
+          user: {
+            id: "user-opaque",
+            token,
+          },
+        };
+      },
+    };
+
+    let called = false;
+
+    const authentication = createProvisioningSupabaseAuthentication(
+      { projectUrl: "https://example.supabase.co" },
+      {
+        authenticationProvider: baseProvider,
+        accountProvisioner: {
+          async provision() {
+            called = true;
+          },
+        },
+      },
+    );
+
+    const request = new Request("https://example.com/api");
+    await authentication.authenticate({ request });
+
+    expect(called).toBe(false);
   });
 });
 
