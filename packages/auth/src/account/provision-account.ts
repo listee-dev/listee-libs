@@ -1,4 +1,9 @@
-import type { Database, RlsClient, RlsTransaction } from "@listee/db";
+import type {
+  Database,
+  RlsClient,
+  RlsTransaction,
+  SupabaseToken,
+} from "@listee/db";
 import {
   and,
   categories,
@@ -8,7 +13,6 @@ import {
   eq,
   profiles,
 } from "@listee/db";
-import type { SupabaseToken } from "@listee/types";
 
 interface ProvisionAccountParams {
   readonly userId: string;
