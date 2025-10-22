@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
 jobs:
   lint:
     uses: listee-dev/listee-ci/.github/workflows/lint.yml@main
@@ -14,3 +19,12 @@ jobs:
 
   test:
     uses: listee-dev/listee-ci/.github/workflows/test.yml@main
+
+  release:
+    needs:
+      - lint
+      - typecheck
+      - test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: listee-dev/listee-ci/.github/workflows/release.yml@main
+    secrets: inherit
