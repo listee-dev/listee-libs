@@ -5,7 +5,6 @@ import type {
   SupabaseToken,
 } from "@listee/db";
 import {
-  and,
   categories,
   createRlsClient,
   DEFAULT_CATEGORY_KIND,
@@ -16,7 +15,7 @@ import {
 
 export interface ProvisionAccountParams {
   readonly userId: string;
-  readonly token: SupabaseToken;
+  readonly token: SupabaseToken | string;
   readonly email?: string | null;
 }
 
@@ -26,7 +25,7 @@ export interface AccountProvisioner {
 
 export interface AccountProvisionerDependencies {
   readonly database?: Database;
-  readonly createRlsClient?: (token: SupabaseToken) => RlsClient;
+  readonly createRlsClient?: (token: SupabaseToken | string) => RlsClient;
   readonly defaultCategoryName?: string;
   readonly defaultCategoryKind?: string;
 }
@@ -51,12 +50,12 @@ function resolveEmail(
 
 function resolveCreateRlsClient(
   dependencies: AccountProvisionerDependencies,
-): (token: SupabaseToken) => RlsClient {
+): (token: SupabaseToken | string) => RlsClient {
   if (dependencies.createRlsClient !== undefined) {
     return dependencies.createRlsClient;
   }
 
-  return (token: SupabaseToken) =>
+  return (token: SupabaseToken | string) =>
     createRlsClient(token, { database: dependencies.database });
 }
 
