@@ -1,5 +1,18 @@
 # @listee/api
 
+## 0.2.0
+
+### Minor Changes
+
+- 73327cf: Add create routes, provisioning, and RLS client improvements.
+
+### Patch Changes
+
+- Updated dependencies [73327cf]
+  - @listee/auth@0.2.0
+  - @listee/db@0.2.0
+  - @listee/types@0.2.0
+
 ## 0.1.1
 
 ### Patch Changes
