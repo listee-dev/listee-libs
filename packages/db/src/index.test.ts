@@ -5,8 +5,7 @@ import { beforeAll, beforeEach, describe, expect, mock, test } from "bun:test";
 type ModuleExports = typeof import("./index");
 type CreatePostgresConnection = ModuleExports["createPostgresConnection"];
 type CreateRlsClient = ModuleExports["createRlsClient"];
-type ParseSupabaseAccessToken =
-  ModuleExports["parseSupabaseAccessToken"];
+type ParseSupabaseAccessToken = ModuleExports["parseSupabaseAccessToken"];
 
 interface PostgresCall {
   url: unknown;
@@ -30,6 +29,15 @@ interface TransactionRecord {
 }
 
 type ExecuteInterceptor = (query: SqlStatement) => Promise<void>;
+
+class PostgresPermissionError extends Error {
+  constructor(
+    message: string,
+    readonly code: string,
+  ) {
+    super(message);
+  }
+}
 
 function renderSql(statement: SqlStatement): string {
   return statement.strings.join("");
@@ -295,9 +303,10 @@ describe("createRlsClient", () => {
     setExecuteInterceptor(async (statement) => {
       const sqlText = renderSql(statement);
       if (sqlText.includes("set local role")) {
-        const error = new Error('permission denied to set role "authenticated"');
-        (error as { code: string }).code = "42501";
-        throw error;
+        throw new PostgresPermissionError(
+          'permission denied to set role "authenticated"',
+          "42501",
+        );
       }
     });
 
@@ -307,9 +316,9 @@ describe("createRlsClient", () => {
     };
 
     const client = createRlsClient(token);
-    await expect(
-      client.rls(async () => "ok"),
-    ).rejects.toThrow('Failed to set local role "authenticated"');
+    await expect(client.rls(async () => "ok")).rejects.toThrow(
+      'Failed to set local role "authenticated"',
+    );
   });
 
   test("accepts a Supabase access token string", async () => {

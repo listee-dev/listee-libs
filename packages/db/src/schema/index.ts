@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import {
   boolean,
@@ -99,9 +99,7 @@ export const categories = pgTable(
         .on(table.createdBy, table.name)
         // drizzle-kit stringifies template parameters as placeholders, so use sql.raw
         // to inject the literal value without producing $1 in the generated migration.
-        .where(
-          sql`${table.kind} = ${sql.raw(`'${DEFAULT_CATEGORY_KIND}'`)}`,
-        ),
+        .where(sql`${table.kind} = ${sql.raw(`'${DEFAULT_CATEGORY_KIND}'`)}`),
     ];
   },
 );

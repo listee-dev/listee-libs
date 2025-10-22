@@ -179,11 +179,19 @@ function isSupabaseToken(value: unknown): value is SupabaseToken {
     return false;
   }
 
-  if ("iss" in value && value.iss !== undefined && typeof value.iss !== "string") {
+  if (
+    "iss" in value &&
+    value.iss !== undefined &&
+    typeof value.iss !== "string"
+  ) {
     return false;
   }
 
-  if ("sub" in value && value.sub !== undefined && typeof value.sub !== "string") {
+  if (
+    "sub" in value &&
+    value.sub !== undefined &&
+    typeof value.sub !== "string"
+  ) {
     return false;
   }
 
@@ -194,23 +202,43 @@ function isSupabaseToken(value: unknown): value is SupabaseToken {
     }
   }
 
-  if ("exp" in value && value.exp !== undefined && typeof value.exp !== "number") {
+  if (
+    "exp" in value &&
+    value.exp !== undefined &&
+    typeof value.exp !== "number"
+  ) {
     return false;
   }
 
-  if ("nbf" in value && value.nbf !== undefined && typeof value.nbf !== "number") {
+  if (
+    "nbf" in value &&
+    value.nbf !== undefined &&
+    typeof value.nbf !== "number"
+  ) {
     return false;
   }
 
-  if ("iat" in value && value.iat !== undefined && typeof value.iat !== "number") {
+  if (
+    "iat" in value &&
+    value.iat !== undefined &&
+    typeof value.iat !== "number"
+  ) {
     return false;
   }
 
-  if ("jti" in value && value.jti !== undefined && typeof value.jti !== "string") {
+  if (
+    "jti" in value &&
+    value.jti !== undefined &&
+    typeof value.jti !== "string"
+  ) {
     return false;
   }
 
-  if ("role" in value && value.role !== undefined && typeof value.role !== "string") {
+  if (
+    "role" in value &&
+    value.role !== undefined &&
+    typeof value.role !== "string"
+  ) {
     return false;
   }
 
@@ -348,9 +376,7 @@ function decodeBase64Url(value: string): string {
   const padding = normalized.length % 4;
 
   const padded =
-    padding === 0
-      ? normalized
-      : `${normalized}${"=".repeat(4 - padding)}`;
+    padding === 0 ? normalized : `${normalized}${"=".repeat(4 - padding)}`;
 
   const buffer = Buffer.from(padded, "base64");
   return buffer.toString("utf8");
@@ -411,7 +437,11 @@ function isRolePermissionError(error: unknown): boolean {
 
   if (isRecord(error)) {
     const codeValue = readStringProperty(error, "code");
-    if (codeValue === "42501" || codeValue === "0A000" || codeValue === "28000") {
+    if (
+      codeValue === "42501" ||
+      codeValue === "0A000" ||
+      codeValue === "28000"
+    ) {
       return true;
     }
   }

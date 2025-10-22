@@ -5,7 +5,6 @@ import type {
   SupabaseToken,
 } from "@listee/db";
 import {
-  and,
   categories,
   createRlsClient,
   DEFAULT_CATEGORY_KIND,
