@@ -5,6 +5,7 @@ import { beforeAll, beforeEach, describe, expect, mock, test } from "bun:test";
 type ModuleExports = typeof import("./index");
 type CreatePostgresConnection = ModuleExports["createPostgresConnection"];
 type CreateRlsClient = ModuleExports["createRlsClient"];
+type ParseSupabaseAccessToken = ModuleExports["parseSupabaseAccessToken"];
 
 interface PostgresCall {
   url: unknown;
@@ -27,6 +28,17 @@ interface TransactionRecord {
   queries: Array<SqlStatement>;
 }
 
+type ExecuteInterceptor = (query: SqlStatement) => Promise<void>;
+
+class PostgresPermissionError extends Error {
+  constructor(
+    message: string,
+    readonly code: string,
+  ) {
+    super(message);
+  }
+}
+
 function renderSql(statement: SqlStatement): string {
   return statement.strings.join("");
 }
@@ -37,6 +49,7 @@ let connectionCounter = 0;
 const transactionRecords: Array<TransactionRecord> = [];
 const rawValues: Array<unknown> = [];
 let connectionNamespace = 0;
+let executeInterceptor: ExecuteInterceptor | null = null;
 
 function sqlTag(
   strings: TemplateStringsArray,
@@ -114,6 +127,9 @@ mock.module("drizzle-orm/postgres-js", () => ({
         const tx: { execute: (query: SqlStatement) => Promise<void> } = {
           execute: async (query: SqlStatement) => {
             record.queries.push(query);
+            if (executeInterceptor !== null) {
+              await executeInterceptor(query);
+            }
           },
         };
 
@@ -130,14 +146,20 @@ mock.module("drizzle-orm/postgres-js", () => ({
   },
 }));
 
+function setExecuteInterceptor(handler: ExecuteInterceptor | null): void {
+  executeInterceptor = handler;
+}
+
 let createPostgresConnection: CreatePostgresConnection;
 let createRlsClient: CreateRlsClient;
+let parseSupabaseAccessToken: ParseSupabaseAccessToken;
 
 beforeAll(async () => {
   process.env.POSTGRES_URL = "postgres://initial";
   const module = await import("./index");
   createPostgresConnection = module.createPostgresConnection;
   createRlsClient = module.createRlsClient;
+  parseSupabaseAccessToken = module.parseSupabaseAccessToken;
 });
 
 beforeEach(() => {
@@ -146,6 +168,7 @@ beforeEach(() => {
   rawValues.splice(0, rawValues.length);
   connectionNamespace += 1;
   process.env.POSTGRES_URL = `postgres://test-${connectionNamespace}`;
+  setExecuteInterceptor(null);
 });
 
 describe("createPostgresConnection", () => {
@@ -194,6 +217,21 @@ describe("createPostgresConnection", () => {
 });
 
 describe("createRlsClient", () => {
+  function encodeSegment(value: Record<string, unknown>): string {
+    const json = JSON.stringify(value);
+    return Buffer.from(json)
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/u, "");
+  }
+
+  function createAccessToken(payload: Record<string, unknown>): string {
+    const header = encodeSegment({ alg: "none", typ: "JWT" });
+    const body = encodeSegment(payload);
+    return `${header}.${body}.`;
+  }
+
   test("wraps RLS setup and teardown around the transaction", async () => {
     const token = {
       sub: "user-123",
@@ -208,21 +246,45 @@ describe("createRlsClient", () => {
     expect(transactionRecords.length).toBe(1);
 
     const [record] = transactionRecords;
-    expect(record.queries.length).toBe(2);
+    expect(record.queries.length).toBe(8);
 
-    const [setupQuery, teardownQuery] = record.queries;
-    expect(setupQuery.values[0]).toBe(JSON.stringify(token));
-    expect(setupQuery.values[1]).toBe(token.sub);
-    expect(renderSql(setupQuery)).toContain("set_config('request.jwt.claims'");
-    expect(renderSql(setupQuery)).toContain(
+    const [
+      setClaims,
+      setSubject,
+      setRoleClaim,
+      setRole,
+      resetRole,
+      clearRoleClaim,
+      clearSubject,
+      clearClaims,
+    ] = record.queries;
+
+    expect(setClaims.values[0]).toBe(JSON.stringify(token));
+    expect(renderSql(setClaims)).toContain("set_config('request.jwt.claims'");
+
+    expect(setSubject.values[0]).toBe(token.sub);
+    expect(renderSql(setSubject)).toContain(
       "set_config('request.jwt.claim.sub'",
     );
 
-    expect(renderSql(teardownQuery)).toContain(
+    expect(setRoleClaim.values[0]).toBe("anon");
+    expect(renderSql(setRoleClaim)).toContain(
+      "set_config('request.jwt.claim.role'",
+    );
+
+    expect(renderSql(setRole)).toContain("set local role");
+    expect(rawValues.at(-1)).toBe("anon");
+
+    expect(renderSql(resetRole)).toContain("reset role");
+    expect(renderSql(clearRoleClaim)).toContain(
+      "set_config('request.jwt.claim.role', NULL",
+    );
+    expect(renderSql(clearSubject)).toContain(
+      "set_config('request.jwt.claim.sub', NULL",
+    );
+    expect(renderSql(clearClaims)).toContain(
       "set_config('request.jwt.claims', NULL",
     );
-    expect(renderSql(teardownQuery)).toContain("reset role");
-    expect(rawValues.at(-1)).toBe("anon");
   });
 
   test("preserves a valid role value", async () => {
@@ -235,5 +297,54 @@ describe("createRlsClient", () => {
     await client.rls(async () => undefined);
 
     expect(rawValues.at(-1)).toBe("editor");
+  });
+
+  test("throws a descriptive error when local role cannot be set", async () => {
+    setExecuteInterceptor(async (statement) => {
+      const sqlText = renderSql(statement);
+      if (sqlText.includes("set local role")) {
+        throw new PostgresPermissionError(
+          'permission denied to set role "authenticated"',
+          "42501",
+        );
+      }
+    });
+
+    const token = {
+      sub: "user-222",
+      role: "authenticated",
+    };
+
+    const client = createRlsClient(token);
+    await expect(client.rls(async () => "ok")).rejects.toThrow(
+      'Failed to set local role "authenticated"',
+    );
+  });
+
+  test("accepts a Supabase access token string", async () => {
+    const payload = {
+      sub: "user-456",
+      role: "authenticated",
+    };
+    const accessToken = createAccessToken(payload);
+
+    const client = createRlsClient(accessToken);
+    await client.rls(async () => undefined);
+
+    expect(rawValues.at(-1)).toBe("authenticated");
+  });
+
+  test("parses access token payloads", () => {
+    const payload = {
+      sub: "user-789",
+      role: "authenticated",
+      aud: ["audience"],
+    };
+    const accessToken = createAccessToken(payload);
+    const parsed = parseSupabaseAccessToken(accessToken);
+
+    expect(parsed.sub).toBe(payload.sub);
+    expect(parsed.role).toBe(payload.role);
+    expect(parsed.aud).toEqual(payload.aud);
   });
 });
