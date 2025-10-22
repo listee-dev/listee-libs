@@ -2,6 +2,7 @@ import type {
   Category,
   CategoryService,
   CategoryServiceDependencies,
+  CreateCategoryParams,
   FindCategoryRepositoryParams,
   ListCategoriesRepositoryParams,
   PaginatedResult,
@@ -22,8 +23,18 @@ export function createCategoryService(
     return dependencies.repository.findById(params);
   }
 
+  async function create(params: CreateCategoryParams): Promise<Category> {
+    return dependencies.repository.create({
+      name: params.name,
+      kind: params.kind,
+      createdBy: params.userId,
+      updatedBy: params.userId,
+    });
+  }
+
   return {
     listByUserId,
     findById,
+    create,
   };
 }

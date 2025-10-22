@@ -17,6 +17,13 @@ export interface FindCategoryParams {
 export interface CategoryQueries {
   listByUserId(params: ListCategoriesParams): Promise<ListCategoriesResult>;
   findById(params: FindCategoryParams): Promise<Category | null>;
+  create(params: CreateCategoryParams): Promise<Category>;
+}
+
+export interface CreateCategoryParams {
+  readonly userId: string;
+  readonly name: string;
+  readonly kind: string;
 }
 
 export interface ListTasksParams {
@@ -32,6 +39,15 @@ export interface FindTaskParams {
 export interface TaskQueries {
   listByCategory(params: ListTasksParams): Promise<readonly Task[]>;
   findById(params: FindTaskParams): Promise<Task | null>;
+  create(params: CreateTaskParams): Promise<Task>;
+}
+
+export interface CreateTaskParams {
+  readonly categoryId: string;
+  readonly userId: string;
+  readonly name: string;
+  readonly description?: string | null;
+  readonly isChecked?: boolean;
 }
 
 export interface DatabaseHealthStatus {
@@ -52,11 +68,19 @@ export interface FindCategoryRepositoryParams {
   readonly userId?: string;
 }
 
+export interface CreateCategoryRepositoryParams {
+  readonly name: string;
+  readonly kind: string;
+  readonly createdBy: string;
+  readonly updatedBy: string;
+}
+
 export interface CategoryRepository {
   listByUserId(
     params: ListCategoriesRepositoryParams,
   ): Promise<PaginatedResult<Category>>;
   findById(params: FindCategoryRepositoryParams): Promise<Category | null>;
+  create(params: CreateCategoryRepositoryParams): Promise<Category>;
 }
 
 export interface CategoryService {
@@ -64,6 +88,7 @@ export interface CategoryService {
     params: ListCategoriesRepositoryParams,
   ): Promise<PaginatedResult<Category>>;
   findById(params: FindCategoryRepositoryParams): Promise<Category | null>;
+  create(params: CreateCategoryParams): Promise<Category>;
 }
 
 export interface CategoryServiceDependencies {
@@ -80,18 +105,30 @@ export interface FindTaskRepositoryParams {
   readonly userId?: string;
 }
 
+export interface CreateTaskRepositoryParams {
+  readonly categoryId: string;
+  readonly name: string;
+  readonly description?: string | null;
+  readonly isChecked: boolean;
+  readonly createdBy: string;
+  readonly updatedBy: string;
+}
+
 export interface TaskRepository {
   listByCategory(params: ListTasksRepositoryParams): Promise<readonly Task[]>;
   findById(params: FindTaskRepositoryParams): Promise<Task | null>;
+  create(params: CreateTaskRepositoryParams): Promise<Task>;
 }
 
 export interface TaskService {
   listByCategory(params: ListTasksRepositoryParams): Promise<readonly Task[]>;
   findById(params: FindTaskRepositoryParams): Promise<Task | null>;
+  create(params: CreateTaskParams): Promise<Task>;
 }
 
 export interface TaskServiceDependencies {
   readonly repository: TaskRepository;
+  readonly categoryRepository?: CategoryRepository;
 }
 
 export interface CategoryQueriesDependencies {
@@ -110,6 +147,7 @@ export interface RegisterCategoryRoutesOptions {
 export interface RegisterTaskRoutesOptions {
   readonly queries?: TaskQueries;
   readonly authentication?: AuthenticationProvider;
+  readonly categoryQueries?: CategoryQueries;
 }
 
 export interface RegisterHealthRoutesOptions {

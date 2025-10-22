@@ -59,9 +59,8 @@ describe("health routes", () => {
 });
 
 describe("category routes", () => {
-  const { categoryQueries, categories } = createCategoryQueries();
-
   test("lists categories for a user", async () => {
+    const { categoryQueries, categories } = createCategoryQueries();
     const authentication = createHeaderAuthentication();
     const app = createApp({ categoryQueries, authentication });
 
@@ -80,6 +79,7 @@ describe("category routes", () => {
   });
 
   test("rejects invalid limit", async () => {
+    const { categoryQueries } = createCategoryQueries();
     const authentication = createHeaderAuthentication();
     const app = createApp({ categoryQueries, authentication });
 
@@ -95,6 +95,7 @@ describe("category routes", () => {
   });
 
   test("finds category by id", async () => {
+    const { categoryQueries, categories } = createCategoryQueries();
     const authentication = createHeaderAuthentication();
     const app = createApp({ categoryQueries, authentication });
     const target = categories[0];
@@ -111,6 +112,7 @@ describe("category routes", () => {
   });
 
   test("returns 404 when category is missing", async () => {
+    const { categoryQueries } = createCategoryQueries();
     const authentication = createHeaderAuthentication();
     const app = createApp({ categoryQueries, authentication });
 
@@ -121,12 +123,33 @@ describe("category routes", () => {
     );
     expect(response.status).toBe(404);
   });
+
+  test("creates category for a user", async () => {
+    const { categoryQueries } = createCategoryQueries();
+    const authentication = createHeaderAuthentication();
+    const app = createApp({ categoryQueries, authentication });
+
+    const response = await app.fetch(
+      createRequest("/users/user-1/categories", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer user-1",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: "Inbox", kind: "user" }),
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.name).toBe("Inbox");
+    expect(body.data.kind).toBe("user");
+  });
 });
 
 describe("task routes", () => {
-  const { taskQueries, tasks } = createTaskQueries();
-
   test("lists tasks for a category", async () => {
+    const { taskQueries, tasks } = createTaskQueries();
     const authentication = createHeaderAuthentication();
     const app = createApp({ taskQueries, authentication });
     const categoryId = tasks[0].categoryId;
@@ -144,6 +167,7 @@ describe("task routes", () => {
   });
 
   test("finds task by id", async () => {
+    const { taskQueries, tasks } = createTaskQueries();
     const authentication = createHeaderAuthentication();
     const app = createApp({ taskQueries, authentication });
     const target = tasks[0];
@@ -160,6 +184,7 @@ describe("task routes", () => {
   });
 
   test("returns 404 when task is missing", async () => {
+    const { taskQueries } = createTaskQueries();
     const authentication = createHeaderAuthentication();
     const app = createApp({ taskQueries, authentication });
 
@@ -170,11 +195,47 @@ describe("task routes", () => {
     );
     expect(response.status).toBe(404);
   });
+
+  test("creates task for a category", async () => {
+    const { categoryQueries } = createCategoryQueries();
+    const { taskQueries } = createTaskQueries();
+    const authentication = createHeaderAuthentication();
+    const category = await categoryQueries.findById({
+      categoryId: "category-1",
+      userId: "user-1",
+    });
+
+    if (category === null) {
+      throw new Error("Expected category to exist in test fixture");
+    }
+
+    const app = createApp({
+      taskQueries,
+      categoryQueries,
+      authentication,
+    });
+
+    const response = await app.fetch(
+      createRequest(`/categories/${category.id}/tasks`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer user-1",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: "New Task", description: "Details" }),
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.name).toBe("New Task");
+    expect(body.data.categoryId).toBe(category.id);
+  });
 });
 
 function createCategoryQueries(): {
   readonly categoryQueries: CategoryQueries;
-  readonly categories: readonly Category[];
+  readonly categories: Category[];
 } {
   const categories: Category[] = [
     createCategory({
@@ -190,6 +251,8 @@ function createCategoryQueries(): {
       createdAt: new Date("2024-01-01T00:00:00Z"),
     }),
   ];
+
+  let nextCategoryId = categories.length + 1;
 
   const categoryQueries: CategoryQueries = {
     listByUserId: async ({ userId, limit = 20 }) => {
@@ -213,6 +276,19 @@ function createCategoryQueries(): {
       const category = categories.find((item) => item.id === categoryId);
       return category ?? null;
     },
+    create: async ({ userId, name, kind }) => {
+      const newCategory = createCategory({
+        id: `category-${nextCategoryId}`,
+        createdAt: new Date("2024-01-04T00:00:00Z"),
+        name,
+        kind,
+        createdBy: userId,
+        updatedBy: userId,
+      });
+      nextCategoryId += 1;
+      categories.unshift(newCategory);
+      return newCategory;
+    },
   };
 
   return { categoryQueries, categories };
@@ -220,12 +296,14 @@ function createCategoryQueries(): {
 
 function createTaskQueries(): {
   readonly taskQueries: TaskQueries;
-  readonly tasks: readonly Task[];
+  readonly tasks: Task[];
 } {
   const tasks: Task[] = [
     createTask({ id: "task-1", categoryId: "category-1" }),
     createTask({ id: "task-2", categoryId: "category-2" }),
   ];
+
+  let nextTaskId = tasks.length + 1;
 
   const taskQueries: TaskQueries = {
     listByCategory: async ({ categoryId }) =>
@@ -233,6 +311,20 @@ function createTaskQueries(): {
     findById: async ({ taskId }) => {
       const task = tasks.find((item) => item.id === taskId);
       return task ?? null;
+    },
+    create: async ({ categoryId, userId, name, description, isChecked }) => {
+      const newTask = createTask({
+        id: `task-${nextTaskId}`,
+        categoryId,
+        name,
+        description: description ?? null,
+        isChecked: isChecked ?? false,
+        createdBy: userId,
+        updatedBy: userId,
+      });
+      nextTaskId += 1;
+      tasks.push(newTask);
+      return newTask;
     },
   };
 
@@ -242,15 +334,22 @@ function createTaskQueries(): {
 interface CategoryOptions {
   readonly id: string;
   readonly createdAt: Date;
+  readonly name?: string;
+  readonly kind?: string;
+  readonly createdBy?: string;
+  readonly updatedBy?: string;
 }
 
 function createCategory(options: CategoryOptions): Category {
+  const createdBy = options.createdBy ?? "user-1";
+  const updatedBy = options.updatedBy ?? createdBy;
+
   return {
     id: options.id,
-    name: `Category ${options.id}`,
-    kind: "user",
-    createdBy: "user-1",
-    updatedBy: "user-1",
+    name: options.name ?? `Category ${options.id}`,
+    kind: options.kind ?? "user",
+    createdBy,
+    updatedBy,
     createdAt: options.createdAt,
     updatedAt: options.createdAt,
   };
@@ -259,18 +358,26 @@ function createCategory(options: CategoryOptions): Category {
 interface TaskOptions {
   readonly id: string;
   readonly categoryId: string;
+  readonly name?: string;
+  readonly description?: string | null;
+  readonly isChecked?: boolean;
+  readonly createdBy?: string;
+  readonly updatedBy?: string;
 }
 
 function createTask(options: TaskOptions): Task {
   const timestamp = new Date("2024-01-01T00:00:00Z");
+  const createdBy = options.createdBy ?? "user-1";
+  const updatedBy = options.updatedBy ?? createdBy;
+
   return {
     id: options.id,
-    name: `Task ${options.id}`,
-    description: null,
-    isChecked: false,
+    name: options.name ?? `Task ${options.id}`,
+    description: options.description ?? null,
+    isChecked: options.isChecked ?? false,
     categoryId: options.categoryId,
-    createdBy: "user-1",
-    updatedBy: "user-1",
+    createdBy,
+    updatedBy,
     createdAt: timestamp,
     updatedAt: timestamp,
   };
