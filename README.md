@@ -58,4 +58,18 @@ Keep a single direction: `routes → queries → (services → repositories)`. W
 - The recommended execution order for an authenticated endpoint is `Route Handler → Authentication → Queries → Authorization → Services/Repositories`. Queries receive the authenticated actor (for example, via context) and call the relevant authorization policy before touching domain services.
 
 ## Release Process
-Changesets drive versioning and publishing. Merging to `main` triggers the shared CI pipelines, including the release workflow that prepares npm publications. Confirm published versions for `@listee/types` and `@listee/db` before announcing availability to downstream projects.
+Changesets drive versioning and publishing.
+
+1. Run `bun run changeset` for every meaningful change. Select the affected packages and bump type, then commit the generated `.changeset/*.md` file.
+2. When the Changeset PR merges to `main`, the CI pipeline creates a “Version Packages” PR. Merge it to stage versions.
+3. A second merge to `main` triggers the `release` job. Approve the `production` environment gate in Actions to publish to npm.
+4. Verify the published versions with `npm view @listee/<package> version` and update release notes as needed.
+
+### Trusted Publishing requirements
+- Each package `package.json` must declare:
+  ```json
+  "publishConfig": { "access": "public", "provenance": true },
+  "repository": { "type": "git", "url": "https://github.com/listee-dev/listee-libs.git" }
+  ```
+- npm must grant Trusted Publisher access to `listee-dev/listee-libs` (workflow `ci.yml`, environment `production`). No permanent `NPM_TOKEN` is required.
+- The reusable `release.yml` from `listee-ci` uses `npx changeset version/publish` with npm@latest, so local releases can be simulated via `npx changeset version && npx changeset publish`.
