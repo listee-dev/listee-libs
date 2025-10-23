@@ -1,11 +1,30 @@
 #!/usr/bin/env node
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import {
+  copyFile,
+  mkdir,
+  readdir,
+  readFile,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import process from "node:process";
 
 const distFolderName = "dist";
 const dotDistPrefix = `./${distFolderName}/`;
 const distPrefix = `${distFolderName}/`;
+
+const isRecord = (value) => {
+  return typeof value === "object" && value !== null;
+};
+
+const isErrnoWithCode = (value) => {
+  if (!isRecord(value)) {
+    return false;
+  }
+  const code = value.code;
+  return typeof code === "string";
+};
 
 const resolvePackageRoot = () => {
   const [relativePath] = process.argv.slice(2);
@@ -240,6 +259,27 @@ try {
   delete distManifest.files;
 
   await mkdir(distDirectory, { recursive: true });
+
+  const staticAssets = ["README.md", "LICENSE"];
+  for (const asset of staticAssets) {
+    const sourcePath = resolve(packageRoot, asset);
+    const destinationPath = resolve(distDirectory, asset);
+    try {
+      const fileStat = await stat(sourcePath);
+      if (!fileStat.isFile()) {
+        continue;
+      }
+      await copyFile(sourcePath, destinationPath);
+    } catch (error) {
+      if (isErrnoWithCode(error) && error.code === "ENOENT") {
+        continue;
+      }
+      throw new Error(
+        `Failed to copy ${asset} into dist: ${getErrorMessage(error)}`,
+      );
+    }
+  }
+
   const serialized = `${JSON.stringify(distManifest, null, 2)}\n`;
   await writeFile(distManifestPath, serialized);
   console.log(`✔️ Generated ${distManifestPath}`);
