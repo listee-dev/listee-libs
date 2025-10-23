@@ -25,8 +25,8 @@
     "postbuild": "node ../../scripts/write-dist-manifest.mjs"
   },
   "dependencies": {
-    "@listee/db": "catalog:",
-    "@listee/types": "catalog:",
+    "@listee/db": "workspace:^",
+    "@listee/types": "workspace:^",
     "jose": "catalog:"
   }
 }

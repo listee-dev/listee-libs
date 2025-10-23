@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import process from "node:process";
 
@@ -73,18 +73,76 @@ const resolveWorkspaceRoot = async () => {
   return null;
 };
 
-const replaceCatalogReferences = (dependencies, catalog) => {
+const resolveWorkspacePackages = async (workspaceRoot) => {
+  if (!workspaceRoot) {
+    return new Map();
+  }
+
+  const workspaces = workspaceRoot.manifest.workspaces;
+  const patterns = [];
+  if (Array.isArray(workspaces)) {
+    patterns.push(...workspaces);
+  } else if (workspaces && Array.isArray(workspaces.packages)) {
+    patterns.push(...workspaces.packages);
+  }
+
+  const packageVersions = new Map();
+
+  for (const pattern of patterns) {
+    if (!pattern.endsWith("/*")) {
+      continue;
+    }
+    const base = resolve(workspaceRoot.rootDir, pattern.slice(0, -2));
+    try {
+      const entries = await readdir(base, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory()) {
+          continue;
+        }
+        const manifestPath = resolve(base, entry.name, "package.json");
+        try {
+          const raw = await readFile(manifestPath, "utf8");
+          const parsed = JSON.parse(raw);
+          if (typeof parsed.name === "string" && typeof parsed.version === "string") {
+            packageVersions.set(parsed.name, parsed.version);
+          }
+        } catch {
+          // ignore missing manifests
+        }
+      }
+    } catch {
+      // ignore missing workspace directories
+    }
+  }
+
+  return packageVersions;
+};
+
+const replaceSpecialReferences = (dependencies, catalog, workspaceVersions) => {
   if (!dependencies || typeof dependencies !== "object") {
     return dependencies;
   }
 
   return Object.fromEntries(
     Object.entries(dependencies).map(([name, range]) => {
-      if (typeof range === "string" && range.startsWith("catalog:")) {
-        const catalogKey = range === "catalog:" ? name : range.slice("catalog:".length);
-        const resolved = catalog?.[catalogKey];
-        if (typeof resolved === "string" && resolved.length > 0) {
-          return [name, resolved];
+      if (typeof range === "string") {
+        if (range.startsWith("catalog:")) {
+          const catalogKey = range === "catalog:" ? name : range.slice("catalog:".length);
+          const resolved = catalog?.[catalogKey];
+          if (typeof resolved === "string" && resolved.length > 0) {
+            return [name, resolved];
+          }
+        }
+
+        if (range.startsWith("workspace:")) {
+          const specifier = range.slice("workspace:".length);
+          const version = workspaceVersions.get(name);
+          if (typeof version === "string" && version.length > 0) {
+            if (specifier === "^" || specifier === "~") {
+              return [name, `${specifier}${version}`];
+            }
+            return [name, version];
+          }
         }
       }
       return [name, range];
@@ -112,6 +170,7 @@ try {
 
   const workspaceInfo = await resolveWorkspaceRoot();
   const rootCatalog = workspaceInfo?.manifest?.catalog ?? {};
+  const workspaceVersions = await resolveWorkspacePackages(workspaceInfo);
 
   const distManifest = { ...manifest };
 
@@ -136,21 +195,25 @@ try {
     distManifest.exports = normalizeExports(distManifest.exports);
   }
 
-  distManifest.dependencies = replaceCatalogReferences(
+  distManifest.dependencies = replaceSpecialReferences(
     distManifest.dependencies,
     rootCatalog,
+    workspaceVersions,
   );
-  distManifest.devDependencies = replaceCatalogReferences(
+  distManifest.devDependencies = replaceSpecialReferences(
     distManifest.devDependencies,
     rootCatalog,
+    workspaceVersions,
   );
-  distManifest.peerDependencies = replaceCatalogReferences(
+  distManifest.peerDependencies = replaceSpecialReferences(
     distManifest.peerDependencies,
     rootCatalog,
+    workspaceVersions,
   );
-  distManifest.optionalDependencies = replaceCatalogReferences(
+  distManifest.optionalDependencies = replaceSpecialReferences(
     distManifest.optionalDependencies,
     rootCatalog,
+    workspaceVersions,
   );
 
   delete distManifest.scripts;
