@@ -1,5 +1,13 @@
 # @listee/types
 
+## 0.2.1
+
+### Patch Changes
+
+- fa3586b: Include package metadata files in npm publishes and resolve catalog/workspace dependencies to semver ranges when generating dist manifests.
+- Updated dependencies [fa3586b]
+  - @listee/db@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes
