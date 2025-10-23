@@ -4,7 +4,8 @@
   "type": "module",
   "publishConfig": {
     "access": "public",
-    "provenance": true
+    "provenance": true,
+    "directory": "dist"
   },
   "license": "MIT",
   "main": "./dist/index.js",
