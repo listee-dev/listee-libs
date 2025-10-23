@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import process from "node:process";
 
 const distFolderName = "dist";
@@ -51,6 +51,47 @@ const sourceManifestPath = resolve(packageRoot, "package.json");
 const distDirectory = resolve(packageRoot, distFolderName);
 const distManifestPath = resolve(distDirectory, "package.json");
 
+const resolveWorkspaceRoot = async () => {
+  let current = packageRoot;
+  while (true) {
+    const parent = dirname(current);
+    const manifestPath = resolve(current, "package.json");
+    try {
+      const raw = await readFile(manifestPath, "utf8");
+      const parsed = JSON.parse(raw);
+      if (parsed.workspaces !== undefined || parsed.catalog !== undefined) {
+        return { rootDir: current, manifest: parsed };
+      }
+    } catch {
+      // ignore and continue climbing
+    }
+    if (parent === current) {
+      break;
+    }
+    current = parent;
+  }
+  return null;
+};
+
+const replaceCatalogReferences = (dependencies, catalog) => {
+  if (!dependencies || typeof dependencies !== "object") {
+    return dependencies;
+  }
+
+  return Object.fromEntries(
+    Object.entries(dependencies).map(([name, range]) => {
+      if (typeof range === "string" && range.startsWith("catalog:")) {
+        const catalogKey = range === "catalog:" ? name : range.slice("catalog:".length);
+        const resolved = catalog?.[catalogKey];
+        if (typeof resolved === "string" && resolved.length > 0) {
+          return [name, resolved];
+        }
+      }
+      return [name, range];
+    }),
+  );
+};
+
 const getErrorMessage = (value) => {
   if (value instanceof Error) {
     return value.message;
@@ -68,6 +109,9 @@ const getErrorMessage = (value) => {
 try {
   const rawManifest = await readFile(sourceManifestPath, "utf8");
   const manifest = JSON.parse(rawManifest);
+
+  const workspaceInfo = await resolveWorkspaceRoot();
+  const rootCatalog = workspaceInfo?.manifest?.catalog ?? {};
 
   const distManifest = { ...manifest };
 
@@ -91,6 +135,23 @@ try {
   if (distManifest.exports !== undefined) {
     distManifest.exports = normalizeExports(distManifest.exports);
   }
+
+  distManifest.dependencies = replaceCatalogReferences(
+    distManifest.dependencies,
+    rootCatalog,
+  );
+  distManifest.devDependencies = replaceCatalogReferences(
+    distManifest.devDependencies,
+    rootCatalog,
+  );
+  distManifest.peerDependencies = replaceCatalogReferences(
+    distManifest.peerDependencies,
+    rootCatalog,
+  );
+  distManifest.optionalDependencies = replaceCatalogReferences(
+    distManifest.optionalDependencies,
+    rootCatalog,
+  );
 
   delete distManifest.scripts;
   delete distManifest.files;

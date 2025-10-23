@@ -11,7 +11,9 @@
   "types": "./dist/index.d.ts",
   "sideEffects": false,
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "repository": {
     "type": "git",
@@ -23,9 +25,9 @@
     "postbuild": "node ../../scripts/write-dist-manifest.mjs"
   },
   "dependencies": {
-    "@listee/auth": "workspace:*",
-    "@listee/db": "workspace:*",
-    "@listee/types": "workspace:*",
+    "@listee/auth": "catalog:",
+    "@listee/db": "catalog:",
+    "@listee/types": "catalog:",
     "hono": "catalog:"
   }
 }
