@@ -1,5 +1,11 @@
 # @listee/db
 
+## 0.2.2
+
+### Patch Changes
+
+- 35a2a3f: Ensure each package publishes from its `dist` manifest so npm tarballs include semver dependencies.
+
 ## 0.2.1
 
 ### Patch Changes
