@@ -118,7 +118,12 @@ const resolveWorkspacePackages = async (workspaceRoot) => {
   return packageVersions;
 };
 
-const replaceSpecialReferences = (dependencies, catalog, workspaceVersions) => {
+const replaceSpecialReferences = (
+  dependencies,
+  catalog,
+  workspaceVersions,
+  unresolved,
+) => {
   if (!dependencies || typeof dependencies !== "object") {
     return dependencies;
   }
@@ -132,6 +137,7 @@ const replaceSpecialReferences = (dependencies, catalog, workspaceVersions) => {
           if (typeof resolved === "string" && resolved.length > 0) {
             return [name, resolved];
           }
+          unresolved.push({ name, range, type: "catalog" });
         }
 
         if (range.startsWith("workspace:")) {
@@ -143,6 +149,7 @@ const replaceSpecialReferences = (dependencies, catalog, workspaceVersions) => {
             }
             return [name, version];
           }
+          unresolved.push({ name, range, type: "workspace" });
         }
       }
       return [name, range];
@@ -171,6 +178,7 @@ try {
   const workspaceInfo = await resolveWorkspaceRoot();
   const rootCatalog = workspaceInfo?.manifest?.catalog ?? {};
   const workspaceVersions = await resolveWorkspacePackages(workspaceInfo);
+  const unresolvedReferences = [];
 
   const distManifest = { ...manifest };
 
@@ -199,22 +207,34 @@ try {
     distManifest.dependencies,
     rootCatalog,
     workspaceVersions,
+    unresolvedReferences,
   );
   distManifest.devDependencies = replaceSpecialReferences(
     distManifest.devDependencies,
     rootCatalog,
     workspaceVersions,
+    unresolvedReferences,
   );
   distManifest.peerDependencies = replaceSpecialReferences(
     distManifest.peerDependencies,
     rootCatalog,
     workspaceVersions,
+    unresolvedReferences,
   );
   distManifest.optionalDependencies = replaceSpecialReferences(
     distManifest.optionalDependencies,
     rootCatalog,
     workspaceVersions,
+    unresolvedReferences,
   );
+
+  if (unresolvedReferences.length > 0) {
+    console.error("❌ Unresolved workspace/catalog references detected:");
+    for (const { name, range, type } of unresolvedReferences) {
+      console.error(`  ${name}: ${range} (${type})`);
+    }
+    process.exit(1);
+  }
 
   delete distManifest.scripts;
   delete distManifest.files;
