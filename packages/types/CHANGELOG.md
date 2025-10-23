@@ -1,5 +1,13 @@
 # @listee/types
 
+## 0.2.3
+
+### Patch Changes
+
+- 138cca7: Copy README.md and LICENSE into each dist folder during build so they ship with published packages.
+- Updated dependencies [138cca7]
+  - @listee/db@0.2.3
+
 ## 0.2.2
 
 ### Patch Changes
