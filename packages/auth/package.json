@@ -12,6 +12,10 @@
   "files": [
     "dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/listee-dev/listee-libs.git"
+  },
   "scripts": {
     "clean": "rimraf dist",
     "build": "tsc --project tsconfig.build.json",
