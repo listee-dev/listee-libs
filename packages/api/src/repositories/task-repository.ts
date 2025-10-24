@@ -92,10 +92,7 @@ export function createTaskRepository(db: Database): TaskRepository {
       .update(tasks)
       .set(updateData)
       .where(
-        and(
-          eq(tasks.id, params.taskId),
-          eq(tasks.createdBy, params.userId),
-        ),
+        and(eq(tasks.id, params.taskId), eq(tasks.createdBy, params.userId)),
       )
       .returning();
 
@@ -109,10 +106,7 @@ export function createTaskRepository(db: Database): TaskRepository {
     const rows = await db
       .delete(tasks)
       .where(
-        and(
-          eq(tasks.id, params.taskId),
-          eq(tasks.createdBy, params.userId),
-        ),
+        and(eq(tasks.id, params.taskId), eq(tasks.createdBy, params.userId)),
       )
       .returning({ id: tasks.id });
 

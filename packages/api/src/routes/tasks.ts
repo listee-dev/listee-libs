@@ -76,7 +76,9 @@ function parseUpdateTaskPayload(value: unknown): UpdateTaskPayload | null {
     return null;
   }
 
-  const payload: UpdateTaskPayload = {};
+  let name: string | undefined;
+  let description: string | null | undefined;
+  let isChecked: boolean | undefined;
 
   if (hasName) {
     const nameValue = value.name;
@@ -84,7 +86,7 @@ function parseUpdateTaskPayload(value: unknown): UpdateTaskPayload | null {
       return null;
     }
 
-    payload.name = nameValue.trim();
+    name = nameValue.trim();
   }
 
   if (hasDescription) {
@@ -97,10 +99,10 @@ function parseUpdateTaskPayload(value: unknown): UpdateTaskPayload | null {
       return null;
     }
 
-    payload.description =
+    description =
       typeof descriptionValue === "string"
         ? descriptionValue.trim()
-        : descriptionValue ?? null;
+        : (descriptionValue ?? null);
   }
 
   if (hasIsChecked) {
@@ -109,8 +111,14 @@ function parseUpdateTaskPayload(value: unknown): UpdateTaskPayload | null {
       return null;
     }
 
-    payload.isChecked = isCheckedValue;
+    isChecked = isCheckedValue;
   }
+
+  const payload = {
+    ...(name !== undefined ? { name } : {}),
+    ...(hasDescription ? { description: description ?? null } : {}),
+    ...(isChecked !== undefined ? { isChecked } : {}),
+  } satisfies UpdateTaskPayload;
 
   return payload;
 }
