@@ -11,6 +11,23 @@ import type {
 } from "@listee/types";
 
 export function createTaskRepository(db: Database): TaskRepository {
+  function createTaskAccessPredicate(taskId: string, userId: string) {
+    return and(
+      eq(tasks.id, taskId),
+      or(
+        eq(tasks.createdBy, userId),
+        sql<boolean>`
+          exists(
+            select 1
+            from ${categories}
+            where ${categories.id} = ${tasks.categoryId}
+            and ${categories.createdBy} = ${userId}
+          )
+        `,
+      ),
+    );
+  }
+
   async function listByCategory(
     params: ListTasksRepositoryParams,
   ): Promise<readonly Task[]> {
@@ -119,22 +136,7 @@ export function createTaskRepository(db: Database): TaskRepository {
     const rows = await db
       .update(tasks)
       .set(updateData)
-      .where(
-        and(
-          eq(tasks.id, params.taskId),
-          or(
-            eq(tasks.createdBy, params.userId),
-            sql<boolean>`
-              exists(
-                select 1
-                from ${categories}
-                where ${categories.id} = ${tasks.categoryId}
-                and ${categories.createdBy} = ${params.userId}
-              )
-            `,
-          ),
-        ),
-      )
+      .where(createTaskAccessPredicate(params.taskId, params.userId))
       .returning();
 
     const task = rows[0];
@@ -144,22 +146,7 @@ export function createTaskRepository(db: Database): TaskRepository {
   async function _delete(params: DeleteTaskRepositoryParams): Promise<boolean> {
     const rows = await db
       .delete(tasks)
-      .where(
-        and(
-          eq(tasks.id, params.taskId),
-          or(
-            eq(tasks.createdBy, params.userId),
-            sql<boolean>`
-              exists(
-                select 1
-                from ${categories}
-                where ${categories.id} = ${tasks.categoryId}
-                and ${categories.createdBy} = ${params.userId}
-              )
-            `,
-          ),
-        ),
-      )
+      .where(createTaskAccessPredicate(params.taskId, params.userId))
       .returning({ id: tasks.id });
 
     return rows.length > 0;
