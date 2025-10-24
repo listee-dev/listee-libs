@@ -1,5 +1,5 @@
 import type { Database } from "@listee/db";
-import { and, categories, desc, eq, or, tasks } from "@listee/db";
+import { and, categories, desc, eq, or, sql, tasks } from "@listee/db";
 import type {
   CreateTaskRepositoryParams,
   DeleteTaskRepositoryParams,
@@ -11,25 +11,6 @@ import type {
 } from "@listee/types";
 
 export function createTaskRepository(db: Database): TaskRepository {
-  async function hasTaskAccess(
-    taskId: string,
-    userId: string,
-  ): Promise<boolean> {
-    const rows = await db
-      .select({ id: tasks.id })
-      .from(tasks)
-      .innerJoin(categories, eq(tasks.categoryId, categories.id))
-      .where(
-        and(
-          eq(tasks.id, taskId),
-          or(eq(tasks.createdBy, userId), eq(categories.createdBy, userId)),
-        ),
-      )
-      .limit(1);
-
-    return rows.length > 0;
-  }
-
   async function listByCategory(
     params: ListTasksRepositoryParams,
   ): Promise<readonly Task[]> {
@@ -135,15 +116,25 @@ export function createTaskRepository(db: Database): TaskRepository {
       updateData.isChecked = params.isChecked;
     }
 
-    const canAccess = await hasTaskAccess(params.taskId, params.userId);
-    if (!canAccess) {
-      return null;
-    }
-
     const rows = await db
       .update(tasks)
       .set(updateData)
-      .where(eq(tasks.id, params.taskId))
+      .where(
+        and(
+          eq(tasks.id, params.taskId),
+          or(
+            eq(tasks.createdBy, params.userId),
+            sql<boolean>`
+              exists(
+                select 1
+                from ${categories}
+                where ${categories.id} = ${tasks.categoryId}
+                and ${categories.createdBy} = ${params.userId}
+              )
+            `,
+          ),
+        ),
+      )
       .returning();
 
     const task = rows[0];
@@ -151,14 +142,24 @@ export function createTaskRepository(db: Database): TaskRepository {
   }
 
   async function _delete(params: DeleteTaskRepositoryParams): Promise<boolean> {
-    const canAccess = await hasTaskAccess(params.taskId, params.userId);
-    if (!canAccess) {
-      return false;
-    }
-
     const rows = await db
       .delete(tasks)
-      .where(eq(tasks.id, params.taskId))
+      .where(
+        and(
+          eq(tasks.id, params.taskId),
+          or(
+            eq(tasks.createdBy, params.userId),
+            sql<boolean>`
+              exists(
+                select 1
+                from ${categories}
+                where ${categories.id} = ${tasks.categoryId}
+                and ${categories.createdBy} = ${params.userId}
+              )
+            `,
+          ),
+        ),
+      )
       .returning({ id: tasks.id });
 
     return rows.length > 0;
