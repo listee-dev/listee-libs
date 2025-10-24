@@ -32,7 +32,6 @@ export interface UpdateCategoryParams {
   readonly categoryId: string;
   readonly userId: string;
   readonly name?: string;
-  readonly kind?: string;
 }
 
 export interface DeleteCategoryParams {
@@ -108,7 +107,6 @@ export interface UpdateCategoryRepositoryParams {
   readonly categoryId: string;
   readonly userId: string;
   readonly name?: string;
-  readonly kind?: string;
   readonly updatedBy: string;
 }
 

@@ -29,7 +29,6 @@ interface CreateCategoryPayload {
 
 interface UpdateCategoryPayload {
   readonly name?: string;
-  readonly kind?: string;
 }
 
 function parseCreateCategoryPayload(
@@ -60,9 +59,11 @@ function parseUpdateCategoryPayload(
   }
 
   const hasName = "name" in value;
-  const hasKind = "kind" in value;
+  if ("kind" in value) {
+    return null;
+  }
 
-  if (!hasName && !hasKind) {
+  if (!hasName) {
     return null;
   }
 
@@ -76,17 +77,7 @@ function parseUpdateCategoryPayload(
     name = nameValue.trim();
   }
 
-  let kind: string | undefined;
-  if (hasKind) {
-    const kindValue = value.kind;
-    if (!isNonEmptyString(kindValue)) {
-      return null;
-    }
-
-    kind = kindValue.trim();
-  }
-
-  return { name, kind };
+  return { name };
 }
 
 function toCategoryResponse(category: {
@@ -250,7 +241,6 @@ export function registerCategoryRoutes(
         categoryId: context.req.param("categoryId"),
         userId: authResult.user.id,
         name: payload.name,
-        kind: payload.kind,
       });
 
       if (category === null) {

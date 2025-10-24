@@ -372,7 +372,7 @@ function createCategoryQueries(): {
       categories.unshift(newCategory);
       return newCategory;
     },
-    update: async ({ categoryId, userId, name, kind }) => {
+    update: async ({ categoryId, userId, name }) => {
       const index = categories.findIndex(
         (item) => item.id === categoryId && item.createdBy === userId,
       );
@@ -385,7 +385,6 @@ function createCategoryQueries(): {
       const updated: Category = {
         ...current,
         name: name ?? current.name,
-        kind: kind ?? current.kind,
         updatedBy: userId,
         updatedAt: new Date("2024-01-05T00:00:00Z"),
       };

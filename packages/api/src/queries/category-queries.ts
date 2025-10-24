@@ -41,7 +41,6 @@ export function createCategoryQueries(
       categoryId: params.categoryId,
       userId: params.userId,
       name: params.name,
-      kind: params.kind,
     });
   }
 

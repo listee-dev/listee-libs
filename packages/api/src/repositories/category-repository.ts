@@ -183,10 +183,6 @@ export function createCategoryRepository(db: Database): CategoryRepository {
       updateData.name = params.name;
     }
 
-    if (params.kind !== undefined) {
-      updateData.kind = params.kind;
-    }
-
     const rows = await db
       .update(categories)
       .set(updateData)
