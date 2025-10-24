@@ -58,17 +58,12 @@ function parseUpdateCategoryPayload(
     return null;
   }
 
-  const hasName = "name" in value;
   if ("kind" in value) {
     return null;
   }
 
-  if (!hasName) {
-    return null;
-  }
-
   let name: string | undefined;
-  if (hasName) {
+  if ("name" in value) {
     const nameValue = value.name;
     if (!isNonEmptyString(nameValue)) {
       return null;
