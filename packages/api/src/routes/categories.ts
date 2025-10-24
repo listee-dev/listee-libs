@@ -27,6 +27,10 @@ interface CreateCategoryPayload {
   readonly kind: string;
 }
 
+interface UpdateCategoryPayload {
+  readonly name?: string;
+}
+
 function parseCreateCategoryPayload(
   value: unknown,
 ): CreateCategoryPayload | null {
@@ -45,6 +49,30 @@ function parseCreateCategoryPayload(
     name: nameValue.trim(),
     kind: kindValue.trim(),
   };
+}
+
+function parseUpdateCategoryPayload(
+  value: unknown,
+): UpdateCategoryPayload | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  if ("kind" in value) {
+    return null;
+  }
+
+  let name: string | undefined;
+  if ("name" in value) {
+    const nameValue = value.name;
+    if (!isNonEmptyString(nameValue)) {
+      return null;
+    }
+
+    name = nameValue.trim();
+  }
+
+  return { name };
 }
 
 function toCategoryResponse(category: {
@@ -180,6 +208,63 @@ export function registerCategoryRoutes(
       });
 
       return context.json({ data: toCategoryResponse(category) }, 201);
+    } catch (error) {
+      return context.json({ error: toErrorMessage(error) }, 500);
+    }
+  });
+
+  app.patch("/categories/:categoryId", async (context) => {
+    const authResult = await tryAuthenticate(authentication, context.req.raw);
+    if (authResult === null) {
+      return context.json({ error: "Unauthorized" }, 401);
+    }
+
+    let payloadSource: unknown;
+    try {
+      payloadSource = await context.req.json();
+    } catch {
+      return context.json({ error: "Invalid JSON body" }, 400);
+    }
+
+    const payload = parseUpdateCategoryPayload(payloadSource);
+    if (payload === null) {
+      return context.json({ error: "Invalid request body" }, 400);
+    }
+
+    try {
+      const category = await queries.update({
+        categoryId: context.req.param("categoryId"),
+        userId: authResult.user.id,
+        name: payload.name,
+      });
+
+      if (category === null) {
+        return context.json({ error: "Not Found" }, 404);
+      }
+
+      return context.json({ data: toCategoryResponse(category) });
+    } catch (error) {
+      return context.json({ error: toErrorMessage(error) }, 500);
+    }
+  });
+
+  app.delete("/categories/:categoryId", async (context) => {
+    const authResult = await tryAuthenticate(authentication, context.req.raw);
+    if (authResult === null) {
+      return context.json({ error: "Unauthorized" }, 401);
+    }
+
+    try {
+      const deleted = await queries.delete({
+        categoryId: context.req.param("categoryId"),
+        userId: authResult.user.id,
+      });
+
+      if (!deleted) {
+        return context.json({ error: "Not Found" }, 404);
+      }
+
+      return context.newResponse(null, 204);
     } catch (error) {
       return context.json({ error: toErrorMessage(error) }, 500);
     }

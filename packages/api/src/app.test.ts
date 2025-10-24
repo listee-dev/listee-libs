@@ -145,6 +145,49 @@ describe("category routes", () => {
     expect(body.data.name).toBe("Inbox");
     expect(body.data.kind).toBe("user");
   });
+
+  test("updates category for a user", async () => {
+    const { categoryQueries, categories } = createCategoryQueries();
+    const authentication = createHeaderAuthentication();
+    const app = createApp({ categoryQueries, authentication });
+    const target = categories[0];
+
+    const response = await app.fetch(
+      createRequest(`/categories/${target.id}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${target.createdBy}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: "Updated Category" }),
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.name).toBe("Updated Category");
+  });
+
+  test("deletes category for a user", async () => {
+    const { categoryQueries, categories } = createCategoryQueries();
+    const authentication = createHeaderAuthentication();
+    const app = createApp({ categoryQueries, authentication });
+    const target = categories[0];
+
+    const response = await app.fetch(
+      createRequest(`/categories/${target.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${target.createdBy}` },
+      }),
+    );
+
+    expect(response.status).toBe(204);
+    const deleted = await categoryQueries.findById({
+      categoryId: target.id,
+      userId: target.createdBy,
+    });
+    expect(deleted).toBeNull();
+  });
 });
 
 describe("task routes", () => {
@@ -231,6 +274,46 @@ describe("task routes", () => {
     expect(body.data.name).toBe("New Task");
     expect(body.data.categoryId).toBe(category.id);
   });
+
+  test("updates task for a user", async () => {
+    const { taskQueries, tasks } = createTaskQueries();
+    const authentication = createHeaderAuthentication();
+    const app = createApp({ taskQueries, authentication });
+    const target = tasks[0];
+
+    const response = await app.fetch(
+      createRequest(`/tasks/${target.id}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${target.createdBy}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ isChecked: true }),
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.isChecked).toBe(true);
+  });
+
+  test("deletes task for a user", async () => {
+    const { taskQueries, tasks } = createTaskQueries();
+    const authentication = createHeaderAuthentication();
+    const app = createApp({ taskQueries, authentication });
+    const target = tasks[0];
+
+    const response = await app.fetch(
+      createRequest(`/tasks/${target.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${target.createdBy}` },
+      }),
+    );
+
+    expect(response.status).toBe(204);
+    const deleted = await taskQueries.findById({ taskId: target.id });
+    expect(deleted).toBeNull();
+  });
 });
 
 function createCategoryQueries(): {
@@ -289,6 +372,38 @@ function createCategoryQueries(): {
       categories.unshift(newCategory);
       return newCategory;
     },
+    update: async ({ categoryId, userId, name }) => {
+      const index = categories.findIndex(
+        (item) => item.id === categoryId && item.createdBy === userId,
+      );
+
+      if (index === -1) {
+        return null;
+      }
+
+      const current = categories[index];
+      const updated: Category = {
+        ...current,
+        name: name ?? current.name,
+        updatedBy: userId,
+        updatedAt: new Date("2024-01-05T00:00:00Z"),
+      };
+
+      categories[index] = updated;
+      return updated;
+    },
+    delete: async ({ categoryId, userId }) => {
+      const index = categories.findIndex(
+        (item) => item.id === categoryId && item.createdBy === userId,
+      );
+
+      if (index === -1) {
+        return false;
+      }
+
+      categories.splice(index, 1);
+      return true;
+    },
   };
 
   return { categoryQueries, categories };
@@ -325,6 +440,41 @@ function createTaskQueries(): {
       nextTaskId += 1;
       tasks.push(newTask);
       return newTask;
+    },
+    update: async ({ taskId, userId, name, description, isChecked }) => {
+      const index = tasks.findIndex(
+        (item) => item.id === taskId && item.createdBy === userId,
+      );
+
+      if (index === -1) {
+        return null;
+      }
+
+      const current = tasks[index];
+      const updated: Task = {
+        ...current,
+        name: name ?? current.name,
+        description:
+          description !== undefined ? description : current.description,
+        isChecked: isChecked ?? current.isChecked,
+        updatedBy: userId,
+        updatedAt: new Date("2024-01-05T00:00:00Z"),
+      };
+
+      tasks[index] = updated;
+      return updated;
+    },
+    delete: async ({ taskId, userId }) => {
+      const index = tasks.findIndex(
+        (item) => item.id === taskId && item.createdBy === userId,
+      );
+
+      if (index === -1) {
+        return false;
+      }
+
+      tasks.splice(index, 1);
+      return true;
     },
   };
 

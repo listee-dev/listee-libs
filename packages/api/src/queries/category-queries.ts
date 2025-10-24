@@ -2,8 +2,10 @@ import type {
   CategoryQueries,
   CategoryQueriesDependencies,
   CreateCategoryParams,
+  DeleteCategoryParams,
   FindCategoryParams,
   ListCategoriesParams,
+  UpdateCategoryParams,
 } from "@listee/types";
 
 export function createCategoryQueries(
@@ -34,9 +36,26 @@ export function createCategoryQueries(
     });
   }
 
+  async function update(params: UpdateCategoryParams) {
+    return dependencies.service.update({
+      categoryId: params.categoryId,
+      userId: params.userId,
+      name: params.name,
+    });
+  }
+
+  async function deleteCategory(params: DeleteCategoryParams) {
+    return dependencies.service.delete({
+      categoryId: params.categoryId,
+      userId: params.userId,
+    });
+  }
+
   return {
     listByUserId,
     findById,
     create,
+    update,
+    delete: deleteCategory,
   };
 }

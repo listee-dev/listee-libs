@@ -18,12 +18,25 @@ export interface CategoryQueries {
   listByUserId(params: ListCategoriesParams): Promise<ListCategoriesResult>;
   findById(params: FindCategoryParams): Promise<Category | null>;
   create(params: CreateCategoryParams): Promise<Category>;
+  update(params: UpdateCategoryParams): Promise<Category | null>;
+  delete(params: DeleteCategoryParams): Promise<boolean>;
 }
 
 export interface CreateCategoryParams {
   readonly userId: string;
   readonly name: string;
   readonly kind: string;
+}
+
+export interface UpdateCategoryParams {
+  readonly categoryId: string;
+  readonly userId: string;
+  readonly name?: string;
+}
+
+export interface DeleteCategoryParams {
+  readonly categoryId: string;
+  readonly userId: string;
 }
 
 export interface ListTasksParams {
@@ -40,6 +53,8 @@ export interface TaskQueries {
   listByCategory(params: ListTasksParams): Promise<readonly Task[]>;
   findById(params: FindTaskParams): Promise<Task | null>;
   create(params: CreateTaskParams): Promise<Task>;
+  update(params: UpdateTaskParams): Promise<Task | null>;
+  delete(params: DeleteTaskParams): Promise<boolean>;
 }
 
 export interface CreateTaskParams {
@@ -48,6 +63,19 @@ export interface CreateTaskParams {
   readonly name: string;
   readonly description?: string | null;
   readonly isChecked?: boolean;
+}
+
+export interface UpdateTaskParams {
+  readonly taskId: string;
+  readonly userId: string;
+  readonly name?: string;
+  readonly description?: string | null;
+  readonly isChecked?: boolean;
+}
+
+export interface DeleteTaskParams {
+  readonly taskId: string;
+  readonly userId: string;
 }
 
 export interface DatabaseHealthStatus {
@@ -75,12 +103,26 @@ export interface CreateCategoryRepositoryParams {
   readonly updatedBy: string;
 }
 
+export interface UpdateCategoryRepositoryParams {
+  readonly categoryId: string;
+  readonly userId: string;
+  readonly name?: string;
+  readonly updatedBy: string;
+}
+
+export interface DeleteCategoryRepositoryParams {
+  readonly categoryId: string;
+  readonly userId: string;
+}
+
 export interface CategoryRepository {
   listByUserId(
     params: ListCategoriesRepositoryParams,
   ): Promise<PaginatedResult<Category>>;
   findById(params: FindCategoryRepositoryParams): Promise<Category | null>;
   create(params: CreateCategoryRepositoryParams): Promise<Category>;
+  update(params: UpdateCategoryRepositoryParams): Promise<Category | null>;
+  delete(params: DeleteCategoryRepositoryParams): Promise<boolean>;
 }
 
 export interface CategoryService {
@@ -89,6 +131,8 @@ export interface CategoryService {
   ): Promise<PaginatedResult<Category>>;
   findById(params: FindCategoryRepositoryParams): Promise<Category | null>;
   create(params: CreateCategoryParams): Promise<Category>;
+  update(params: UpdateCategoryParams): Promise<Category | null>;
+  delete(params: DeleteCategoryParams): Promise<boolean>;
 }
 
 export interface CategoryServiceDependencies {
@@ -114,16 +158,34 @@ export interface CreateTaskRepositoryParams {
   readonly updatedBy: string;
 }
 
+export interface UpdateTaskRepositoryParams {
+  readonly taskId: string;
+  readonly userId: string;
+  readonly name?: string;
+  readonly description?: string | null;
+  readonly isChecked?: boolean;
+  readonly updatedBy: string;
+}
+
+export interface DeleteTaskRepositoryParams {
+  readonly taskId: string;
+  readonly userId: string;
+}
+
 export interface TaskRepository {
   listByCategory(params: ListTasksRepositoryParams): Promise<readonly Task[]>;
   findById(params: FindTaskRepositoryParams): Promise<Task | null>;
   create(params: CreateTaskRepositoryParams): Promise<Task>;
+  update(params: UpdateTaskRepositoryParams): Promise<Task | null>;
+  delete(params: DeleteTaskRepositoryParams): Promise<boolean>;
 }
 
 export interface TaskService {
   listByCategory(params: ListTasksRepositoryParams): Promise<readonly Task[]>;
   findById(params: FindTaskRepositoryParams): Promise<Task | null>;
   create(params: CreateTaskParams): Promise<Task>;
+  update(params: UpdateTaskParams): Promise<Task | null>;
+  delete(params: DeleteTaskParams): Promise<boolean>;
 }
 
 export interface TaskServiceDependencies {
