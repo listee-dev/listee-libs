@@ -1,5 +1,5 @@
 import type { Database } from "@listee/db";
-import { and, categories, eq, or, tasks } from "@listee/db";
+import { and, categories, desc, eq, or, tasks } from "@listee/db";
 import type {
   CreateTaskRepositoryParams,
   DeleteTaskRepositoryParams,
@@ -37,7 +37,8 @@ export function createTaskRepository(db: Database): TaskRepository {
       const rows = await db
         .select()
         .from(tasks)
-        .where(eq(tasks.categoryId, params.categoryId));
+        .where(eq(tasks.categoryId, params.categoryId))
+        .orderBy(desc(tasks.createdAt), desc(tasks.id));
 
       return rows;
     }
@@ -54,7 +55,8 @@ export function createTaskRepository(db: Database): TaskRepository {
             eq(categories.createdBy, params.userId),
           ),
         ),
-      );
+      )
+      .orderBy(desc(tasks.createdAt), desc(tasks.id));
 
     return rows.map((row) => row.task);
   }
