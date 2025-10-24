@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import {
   boolean,
+  index,
   pgPolicy,
   pgTable,
   text,
@@ -34,6 +35,7 @@ export const profiles = pgTable(
     const isOwner = sql`${table.id} = (select auth.uid())`;
 
     return [
+      index("idx_profiles_default_category_id").on(table.defaultCategoryId),
       pgPolicy("Users can view their profile", {
         for: "select",
         to: authenticatedRole,
@@ -74,6 +76,8 @@ export const categories = pgTable(
     const isOwner = sql`${table.createdBy} = (select auth.uid())`;
 
     return [
+      index("idx_categories_created_by").on(table.createdBy),
+      index("idx_categories_updated_by").on(table.updatedBy),
       pgPolicy("Users can view their categories", {
         for: "select",
         to: authenticatedRole,
@@ -136,6 +140,9 @@ export const tasks = pgTable(
     `;
 
     return [
+      index("idx_tasks_category_id").on(table.categoryId),
+      index("idx_tasks_created_by").on(table.createdBy),
+      index("idx_tasks_updated_by").on(table.updatedBy),
       pgPolicy("Users can view their tasks", {
         for: "select",
         to: authenticatedRole,
