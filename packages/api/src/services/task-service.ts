@@ -1,10 +1,12 @@
 import type {
   CreateTaskParams,
+  DeleteTaskParams,
   FindTaskRepositoryParams,
   ListTasksRepositoryParams,
   Task,
   TaskService,
   TaskServiceDependencies,
+  UpdateTaskParams,
 } from "@listee/types";
 
 export function createTaskService(
@@ -44,9 +46,29 @@ export function createTaskService(
     });
   }
 
+  async function update(params: UpdateTaskParams): Promise<Task | null> {
+    return dependencies.repository.update({
+      taskId: params.taskId,
+      userId: params.userId,
+      name: params.name,
+      description: params.description,
+      isChecked: params.isChecked,
+      updatedBy: params.userId,
+    });
+  }
+
+  async function deleteTask(params: DeleteTaskParams): Promise<boolean> {
+    return dependencies.repository.delete({
+      taskId: params.taskId,
+      userId: params.userId,
+    });
+  }
+
   return {
     listByCategory,
     findById,
     create,
+    update,
+    delete: deleteTask,
   };
 }

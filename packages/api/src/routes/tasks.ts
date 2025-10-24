@@ -22,6 +22,12 @@ interface CreateTaskPayload {
   readonly isChecked?: boolean;
 }
 
+interface UpdateTaskPayload {
+  readonly name?: string;
+  readonly description?: string | null;
+  readonly isChecked?: boolean;
+}
+
 function parseCreateTaskPayload(value: unknown): CreateTaskPayload | null {
   if (!isRecord(value)) {
     return null;
@@ -55,6 +61,58 @@ function parseCreateTaskPayload(value: unknown): CreateTaskPayload | null {
     description,
     isChecked: isCheckedValue,
   };
+}
+
+function parseUpdateTaskPayload(value: unknown): UpdateTaskPayload | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const hasName = "name" in value;
+  const hasDescription = "description" in value;
+  const hasIsChecked = "isChecked" in value;
+
+  if (!hasName && !hasDescription && !hasIsChecked) {
+    return null;
+  }
+
+  const payload: UpdateTaskPayload = {};
+
+  if (hasName) {
+    const nameValue = value.name;
+    if (!isNonEmptyString(nameValue)) {
+      return null;
+    }
+
+    payload.name = nameValue.trim();
+  }
+
+  if (hasDescription) {
+    const descriptionValue = value.description;
+    if (
+      descriptionValue !== undefined &&
+      descriptionValue !== null &&
+      typeof descriptionValue !== "string"
+    ) {
+      return null;
+    }
+
+    payload.description =
+      typeof descriptionValue === "string"
+        ? descriptionValue.trim()
+        : descriptionValue ?? null;
+  }
+
+  if (hasIsChecked) {
+    const isCheckedValue = value.isChecked;
+    if (!isBoolean(isCheckedValue)) {
+      return null;
+    }
+
+    payload.isChecked = isCheckedValue;
+  }
+
+  return payload;
 }
 
 function toTaskResponse(task: {
@@ -174,6 +232,65 @@ export function registerTaskRoutes(
         return context.json({ error: "Not Found" }, 404);
       }
 
+      return context.json({ error: toErrorMessage(error) }, 500);
+    }
+  });
+
+  app.patch("/tasks/:taskId", async (context) => {
+    const authResult = await tryAuthenticate(authentication, context.req.raw);
+    if (authResult === null) {
+      return context.json({ error: "Unauthorized" }, 401);
+    }
+
+    let payloadSource: unknown;
+    try {
+      payloadSource = await context.req.json();
+    } catch {
+      return context.json({ error: "Invalid JSON body" }, 400);
+    }
+
+    const payload = parseUpdateTaskPayload(payloadSource);
+    if (payload === null) {
+      return context.json({ error: "Invalid request body" }, 400);
+    }
+
+    try {
+      const task = await queries.update({
+        taskId: context.req.param("taskId"),
+        userId: authResult.user.id,
+        name: payload.name,
+        description: payload.description,
+        isChecked: payload.isChecked,
+      });
+
+      if (task === null) {
+        return context.json({ error: "Not Found" }, 404);
+      }
+
+      return context.json({ data: toTaskResponse(task) });
+    } catch (error) {
+      return context.json({ error: toErrorMessage(error) }, 500);
+    }
+  });
+
+  app.delete("/tasks/:taskId", async (context) => {
+    const authResult = await tryAuthenticate(authentication, context.req.raw);
+    if (authResult === null) {
+      return context.json({ error: "Unauthorized" }, 401);
+    }
+
+    try {
+      const deleted = await queries.delete({
+        taskId: context.req.param("taskId"),
+        userId: authResult.user.id,
+      });
+
+      if (!deleted) {
+        return context.json({ error: "Not Found" }, 404);
+      }
+
+      return context.newResponse(null, 204);
+    } catch (error) {
       return context.json({ error: toErrorMessage(error) }, 500);
     }
   });

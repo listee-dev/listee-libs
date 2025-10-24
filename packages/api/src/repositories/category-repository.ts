@@ -5,9 +5,11 @@ import type {
   Category,
   CategoryRepository,
   CreateCategoryRepositoryParams,
+  DeleteCategoryRepositoryParams,
   FindCategoryRepositoryParams,
   ListCategoriesRepositoryParams,
   PaginatedResult,
+  UpdateCategoryRepositoryParams,
 } from "@listee/types";
 
 interface CategoryCursorPayload {
@@ -169,9 +171,58 @@ export function createCategoryRepository(db: Database): CategoryRepository {
     return category;
   }
 
+  async function update(
+    params: UpdateCategoryRepositoryParams,
+  ): Promise<Category | null> {
+    const updateData: Partial<typeof categories.$inferInsert> = {
+      updatedBy: params.updatedBy,
+      updatedAt: new Date(),
+    };
+
+    if (params.name !== undefined) {
+      updateData.name = params.name;
+    }
+
+    if (params.kind !== undefined) {
+      updateData.kind = params.kind;
+    }
+
+    const rows = await db
+      .update(categories)
+      .set(updateData)
+      .where(
+        and(
+          eq(categories.id, params.categoryId),
+          eq(categories.createdBy, params.userId),
+        ),
+      )
+      .returning();
+
+    const category = rows[0];
+    return category ?? null;
+  }
+
+  async function deleteCategory(
+    params: DeleteCategoryRepositoryParams,
+  ): Promise<boolean> {
+    const rows = await db
+      .delete(categories)
+      .where(
+        and(
+          eq(categories.id, params.categoryId),
+          eq(categories.createdBy, params.userId),
+        ),
+      )
+      .returning({ id: categories.id });
+
+    return rows.length > 0;
+  }
+
   return {
     listByUserId,
     findById,
     create,
+    update,
+    delete: deleteCategory,
   };
 }

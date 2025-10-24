@@ -1,11 +1,13 @@
 import type { Database } from "@listee/db";
-import { eq, tasks } from "@listee/db";
+import { and, eq, tasks } from "@listee/db";
 import type {
   CreateTaskRepositoryParams,
+  DeleteTaskRepositoryParams,
   FindTaskRepositoryParams,
   ListTasksRepositoryParams,
   Task,
   TaskRepository,
+  UpdateTaskRepositoryParams,
 } from "@listee/types";
 
 export function createTaskRepository(db: Database): TaskRepository {
@@ -66,9 +68,62 @@ export function createTaskRepository(db: Database): TaskRepository {
     return task;
   }
 
+  async function update(
+    params: UpdateTaskRepositoryParams,
+  ): Promise<Task | null> {
+    const updateData: Partial<typeof tasks.$inferInsert> = {
+      updatedBy: params.updatedBy,
+      updatedAt: new Date(),
+    };
+
+    if (params.name !== undefined) {
+      updateData.name = params.name;
+    }
+
+    if (params.description !== undefined) {
+      updateData.description = params.description;
+    }
+
+    if (params.isChecked !== undefined) {
+      updateData.isChecked = params.isChecked;
+    }
+
+    const rows = await db
+      .update(tasks)
+      .set(updateData)
+      .where(
+        and(
+          eq(tasks.id, params.taskId),
+          eq(tasks.createdBy, params.userId),
+        ),
+      )
+      .returning();
+
+    const task = rows[0];
+    return task ?? null;
+  }
+
+  async function deleteTask(
+    params: DeleteTaskRepositoryParams,
+  ): Promise<boolean> {
+    const rows = await db
+      .delete(tasks)
+      .where(
+        and(
+          eq(tasks.id, params.taskId),
+          eq(tasks.createdBy, params.userId),
+        ),
+      )
+      .returning({ id: tasks.id });
+
+    return rows.length > 0;
+  }
+
   return {
     listByCategory,
     findById,
     create,
+    update,
+    delete: deleteTask,
   };
 }

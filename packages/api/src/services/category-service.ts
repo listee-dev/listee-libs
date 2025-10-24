@@ -3,9 +3,11 @@ import type {
   CategoryService,
   CategoryServiceDependencies,
   CreateCategoryParams,
+  DeleteCategoryParams,
   FindCategoryRepositoryParams,
   ListCategoriesRepositoryParams,
   PaginatedResult,
+  UpdateCategoryParams,
 } from "@listee/types";
 
 export function createCategoryService(
@@ -32,9 +34,32 @@ export function createCategoryService(
     });
   }
 
+  async function update(
+    params: UpdateCategoryParams,
+  ): Promise<Category | null> {
+    return dependencies.repository.update({
+      categoryId: params.categoryId,
+      userId: params.userId,
+      name: params.name,
+      kind: params.kind,
+      updatedBy: params.userId,
+    });
+  }
+
+  async function deleteCategory(
+    params: DeleteCategoryParams,
+  ): Promise<boolean> {
+    return dependencies.repository.delete({
+      categoryId: params.categoryId,
+      userId: params.userId,
+    });
+  }
+
   return {
     listByUserId,
     findById,
     create,
+    update,
+    delete: deleteCategory,
   };
 }

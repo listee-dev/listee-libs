@@ -1,9 +1,11 @@
 import type {
   CreateTaskParams,
+  DeleteTaskParams,
   FindTaskParams,
   ListTasksParams,
   TaskQueries,
   TaskQueriesDependencies,
+  UpdateTaskParams,
 } from "@listee/types";
 
 export function createTaskQueries(
@@ -33,9 +35,28 @@ export function createTaskQueries(
     });
   }
 
+  async function update(params: UpdateTaskParams) {
+    return dependencies.service.update({
+      taskId: params.taskId,
+      userId: params.userId,
+      name: params.name,
+      description: params.description,
+      isChecked: params.isChecked,
+    });
+  }
+
+  async function deleteTask(params: DeleteTaskParams) {
+    return dependencies.service.delete({
+      taskId: params.taskId,
+      userId: params.userId,
+    });
+  }
+
   return {
     listByCategory,
     findById,
     create,
+    update,
+    delete: deleteTask,
   };
 }
