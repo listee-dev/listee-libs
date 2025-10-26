@@ -28,7 +28,10 @@ export const profiles = pgTable(
     id: uuid("id").primaryKey(),
     email: text("email").notNull().unique(),
     name: text("name"),
-    defaultCategoryId: uuid("default_category_id"),
+    defaultCategoryId: uuid("default_category_id").references(
+      (): AnyPgColumn => categories.id,
+      { onDelete: "restrict" },
+    ),
     ...timestamps,
   },
   (table) => {
