@@ -103,17 +103,19 @@ export function createAccountProvisioner(
 
       const categoryRecord =
         insertedCategories[0] ??
-        (await tx
-          .select({ categoryId: categories.id })
-          .from(categories)
-          .where(
-            and(
-              eq(categories.createdBy, params.userId),
-              eq(categories.name, defaultCategoryName),
-              eq(categories.kind, defaultCategoryKind),
-            ),
-          )
-          .limit(1))[0];
+        (
+          await tx
+            .select({ categoryId: categories.id })
+            .from(categories)
+            .where(
+              and(
+                eq(categories.createdBy, params.userId),
+                eq(categories.name, defaultCategoryName),
+                eq(categories.kind, defaultCategoryKind),
+              ),
+            )
+            .limit(1)
+        )[0];
 
       if (categoryRecord === undefined) {
         throw new Error("Failed to resolve default category for profile");
