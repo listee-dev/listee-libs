@@ -74,6 +74,19 @@ export function createAccountProvisioner(
     const email = resolveEmail(params.email ?? null, params.userId);
 
     await client.rls(async (tx: RlsTransaction) => {
+      await tx
+        .insert(profiles)
+        .values({
+          id: params.userId,
+          email,
+        })
+        .onConflictDoUpdate({
+          target: profiles.id,
+          set: {
+            email,
+          },
+        });
+
       const insertedCategories = await tx
         .insert(categories)
         .values({
@@ -108,20 +121,18 @@ export function createAccountProvisioner(
 
       const defaultCategoryId = categoryRecord.categoryId;
 
-      await tx
-        .insert(profiles)
-        .values({
-          id: params.userId,
-          email,
+      const shouldUpdateProfile = await tx
+        .update(profiles)
+        .set({
           defaultCategoryId,
+          email,
         })
-        .onConflictDoUpdate({
-          target: profiles.id,
-          set: {
-            email,
-            defaultCategoryId,
-          },
-        });
+        .where(eq(profiles.id, params.userId))
+        .returning({ id: profiles.id });
+
+      if (shouldUpdateProfile.length === 0) {
+        throw new Error("Failed to update profile with default category");
+      }
     });
   }
 
