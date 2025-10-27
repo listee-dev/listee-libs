@@ -1,5 +1,11 @@
 # @listee/db
 
+## 0.3.0
+
+### Minor Changes
+
+- 8b03890: Add category/task update and delete APIs, expose updated query contracts, ensure account provisioning sets default categories, and enforce the profiles.default_category_id foreign key.
+
 ## 0.2.3
 
 ### Patch Changes
