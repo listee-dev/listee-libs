@@ -217,6 +217,14 @@ describe("createPostgresConnection", () => {
 });
 
 describe("createRlsClient", () => {
+  const BASE_CLAIMS = {
+    iss: "https://example.supabase.co/auth/v1",
+    aud: "authenticated" as const,
+    exp: 1_700_000_000,
+    iat: 1_700_000_000,
+    role: "authenticated" as const,
+  } satisfies Record<string, unknown>;
+
   function encodeSegment(value: Record<string, unknown>): string {
     const json = JSON.stringify(value);
     return Buffer.from(json)
@@ -228,12 +236,13 @@ describe("createRlsClient", () => {
 
   function createAccessToken(payload: Record<string, unknown>): string {
     const header = encodeSegment({ alg: "none", typ: "JWT" });
-    const body = encodeSegment(payload);
+    const body = encodeSegment({ ...BASE_CLAIMS, ...payload });
     return `${header}.${body}.`;
   }
 
   test("wraps RLS setup and teardown around the transaction", async () => {
     const token = {
+      ...BASE_CLAIMS,
       sub: "user-123",
       role: "role-with-hyphen",
       extra: "value",
@@ -289,6 +298,7 @@ describe("createRlsClient", () => {
 
   test("preserves a valid role value", async () => {
     const token = {
+      ...BASE_CLAIMS,
       sub: "user-999",
       role: "editor",
     };
@@ -311,6 +321,7 @@ describe("createRlsClient", () => {
     });
 
     const token = {
+      ...BASE_CLAIMS,
       sub: "user-222",
       role: "authenticated",
     };
