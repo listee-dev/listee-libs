@@ -12,22 +12,28 @@ import {
   createSupabaseAuthentication,
 } from "./index.js";
 
-const BASE_CLAIMS = {
-  iss: "https://example.supabase.co/auth/v1",
-  aud: "authenticated" as const,
-  exp: 1_700_000_000,
-  iat: 1_700_000_000,
-  role: "authenticated" as const,
-} satisfies Pick<SupabaseToken, "iss" | "aud" | "exp" | "iat" | "role">;
+const BASE_ISSUER = "https://example.supabase.co/auth/v1";
+const BASE_AUDIENCE = "authenticated";
+const BASE_TIME = 1_700_000_000;
 
-const buildToken = (
-  overrides: Omit<SupabaseToken, "iss" | "aud" | "exp" | "iat" | "role"> &
-    Partial<Pick<SupabaseToken, "role">>,
-): SupabaseToken => {
+type TokenOverrides = Omit<
+  Partial<SupabaseToken>,
+  "iss" | "aud" | "exp" | "iat" | "role" | "sub"
+> & {
+  readonly sub: string;
+  readonly role?: string;
+};
+
+const buildToken = (overrides: TokenOverrides): SupabaseToken => {
+  const { sub, role, ...rest } = overrides;
   return {
-    ...BASE_CLAIMS,
-    ...overrides,
-    role: overrides.role ?? BASE_CLAIMS.role,
+    iss: BASE_ISSUER,
+    aud: BASE_AUDIENCE,
+    exp: BASE_TIME,
+    iat: BASE_TIME,
+    role: role ?? "authenticated",
+    sub,
+    ...rest,
   };
 };
 
