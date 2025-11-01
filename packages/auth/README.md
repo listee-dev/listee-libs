@@ -10,8 +10,7 @@ npm install @listee/auth
 
 ## Features
 
-- Header-based development authentication with `createHeaderAuthentication`
-- Production-ready Supabase verifier via `createSupabaseAuthentication`
+- Supabase JWT verification via `createSupabaseAuthentication`
 - Account provisioning wrapper `createProvisioningSupabaseAuthentication`
 - Strongly typed `AuthenticatedUser` and `AuthenticationContext` exports
 
@@ -20,16 +19,15 @@ npm install @listee/auth
 ```ts
 import { createSupabaseAuthentication } from "@listee/auth";
 
-const authenticate = createSupabaseAuthentication({
-  jwksUrl: new URL("https://<project>.supabase.co/auth/v1/.well-known/jwks.json"),
-  expectedAudience: "authenticated",
+const authentication = createSupabaseAuthentication({
+  projectUrl: "https://<project>.supabase.co",
+  audience: "authenticated",
+  requiredRole: "authenticated",
 });
 
-const result = await authenticate({ request, requiredRole: "authenticated" });
-if (result.type === "success") {
-  const user = result.user;
-  // continue with request handling
-}
+const result = await authentication.authenticate({ request });
+const user = result.user;
+// Continue handling the request with user.id and user.token
 ```
 
 See `src/authentication/` for additional adapters and tests demonstrating error handling scenarios.

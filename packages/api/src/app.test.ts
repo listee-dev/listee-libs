@@ -1,16 +1,59 @@
 import { describe, expect, test } from "bun:test";
-import { createHeaderAuthentication } from "@listee/auth";
+import { AuthenticationError } from "@listee/auth";
 import type {
+  AuthenticationProvider,
   Category,
   CategoryQueries,
   ListCategoriesResult,
+  SupabaseToken,
   Task,
   TaskQueries,
 } from "@listee/types";
 import { createApp } from "./app";
 
+const BASE_CLAIMS = {
+  iss: "https://example.supabase.co/auth/v1",
+  aud: "authenticated" as const,
+  exp: 1_700_000_000,
+  iat: 1_700_000_000,
+};
+
 function createRequest(path: string, init: RequestInit = {}): Request {
   return new Request(`http://localhost${path}`, init);
+}
+
+function createTestAuthentication(): AuthenticationProvider {
+  return {
+    async authenticate({ request }) {
+      const header = request.headers.get("authorization");
+      if (header === null) {
+        throw new AuthenticationError("Missing authorization header");
+      }
+
+      const prefix = "Bearer ";
+      if (!header.startsWith(prefix)) {
+        throw new AuthenticationError("Invalid authorization scheme");
+      }
+
+      const tokenValue = header.slice(prefix.length).trim();
+      if (tokenValue.length === 0) {
+        throw new AuthenticationError("Missing token value");
+      }
+
+      const token: SupabaseToken = {
+        ...BASE_CLAIMS,
+        sub: tokenValue,
+        role: "authenticated",
+      };
+
+      return {
+        user: {
+          id: tokenValue,
+          token,
+        },
+      };
+    },
+  };
 }
 
 describe("health routes", () => {
@@ -61,7 +104,7 @@ describe("health routes", () => {
 describe("category routes", () => {
   test("lists categories for a user", async () => {
     const { categoryQueries, categories } = createCategoryQueries();
-    const authentication = createHeaderAuthentication();
+    const authentication = createTestAuthentication();
     const app = createApp({ categoryQueries, authentication });
 
     const response = await app.fetch(
@@ -80,7 +123,7 @@ describe("category routes", () => {
 
   test("rejects invalid limit", async () => {
     const { categoryQueries } = createCategoryQueries();
-    const authentication = createHeaderAuthentication();
+    const authentication = createTestAuthentication();
     const app = createApp({ categoryQueries, authentication });
 
     const response = await app.fetch(
@@ -96,7 +139,7 @@ describe("category routes", () => {
 
   test("finds category by id", async () => {
     const { categoryQueries, categories } = createCategoryQueries();
-    const authentication = createHeaderAuthentication();
+    const authentication = createTestAuthentication();
     const app = createApp({ categoryQueries, authentication });
     const target = categories[0];
 
@@ -113,7 +156,7 @@ describe("category routes", () => {
 
   test("returns 404 when category is missing", async () => {
     const { categoryQueries } = createCategoryQueries();
-    const authentication = createHeaderAuthentication();
+    const authentication = createTestAuthentication();
     const app = createApp({ categoryQueries, authentication });
 
     const response = await app.fetch(
@@ -126,7 +169,7 @@ describe("category routes", () => {
 
   test("creates category for a user", async () => {
     const { categoryQueries } = createCategoryQueries();
-    const authentication = createHeaderAuthentication();
+    const authentication = createTestAuthentication();
     const app = createApp({ categoryQueries, authentication });
 
     const response = await app.fetch(
@@ -148,7 +191,7 @@ describe("category routes", () => {
 
   test("updates category for a user", async () => {
     const { categoryQueries, categories } = createCategoryQueries();
-    const authentication = createHeaderAuthentication();
+    const authentication = createTestAuthentication();
     const app = createApp({ categoryQueries, authentication });
     const target = categories[0];
 
@@ -170,7 +213,7 @@ describe("category routes", () => {
 
   test("deletes category for a user", async () => {
     const { categoryQueries, categories } = createCategoryQueries();
-    const authentication = createHeaderAuthentication();
+    const authentication = createTestAuthentication();
     const app = createApp({ categoryQueries, authentication });
     const target = categories[0];
 
@@ -193,7 +236,7 @@ describe("category routes", () => {
 describe("task routes", () => {
   test("lists tasks for a category", async () => {
     const { taskQueries, tasks } = createTaskQueries();
-    const authentication = createHeaderAuthentication();
+    const authentication = createTestAuthentication();
     const app = createApp({ taskQueries, authentication });
     const categoryId = tasks[0].categoryId;
 
@@ -211,7 +254,7 @@ describe("task routes", () => {
 
   test("finds task by id", async () => {
     const { taskQueries, tasks } = createTaskQueries();
-    const authentication = createHeaderAuthentication();
+    const authentication = createTestAuthentication();
     const app = createApp({ taskQueries, authentication });
     const target = tasks[0];
 
@@ -228,7 +271,7 @@ describe("task routes", () => {
 
   test("returns 404 when task is missing", async () => {
     const { taskQueries } = createTaskQueries();
-    const authentication = createHeaderAuthentication();
+    const authentication = createTestAuthentication();
     const app = createApp({ taskQueries, authentication });
 
     const response = await app.fetch(
@@ -242,7 +285,7 @@ describe("task routes", () => {
   test("creates task for a category", async () => {
     const { categoryQueries } = createCategoryQueries();
     const { taskQueries } = createTaskQueries();
-    const authentication = createHeaderAuthentication();
+    const authentication = createTestAuthentication();
     const category = await categoryQueries.findById({
       categoryId: "category-1",
       userId: "user-1",
@@ -277,7 +320,7 @@ describe("task routes", () => {
 
   test("updates task for a user", async () => {
     const { taskQueries, tasks } = createTaskQueries();
-    const authentication = createHeaderAuthentication();
+    const authentication = createTestAuthentication();
     const app = createApp({ taskQueries, authentication });
     const target = tasks[0];
 
@@ -299,7 +342,7 @@ describe("task routes", () => {
 
   test("deletes task for a user", async () => {
     const { taskQueries, tasks } = createTaskQueries();
-    const authentication = createHeaderAuthentication();
+    const authentication = createTestAuthentication();
     const app = createApp({ taskQueries, authentication });
     const target = tasks[0];
 

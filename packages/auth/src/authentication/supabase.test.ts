@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import type {
   AuthenticatedToken,
   AuthenticationProvider,
-  HeaderToken,
   SupabaseAuthenticationOptions,
   SupabaseToken,
 } from "@listee/types";
@@ -12,6 +11,31 @@ import {
   createProvisioningSupabaseAuthentication,
   createSupabaseAuthentication,
 } from "./index.js";
+
+const BASE_ISSUER = "https://example.supabase.co/auth/v1";
+const BASE_AUDIENCE = "authenticated";
+const BASE_TIME = 1_700_000_000;
+
+type TokenOverrides = Omit<
+  Partial<SupabaseToken>,
+  "iss" | "aud" | "exp" | "iat" | "role" | "sub"
+> & {
+  readonly sub: string;
+  readonly role?: string;
+};
+
+const buildToken = (overrides: TokenOverrides): SupabaseToken => {
+  const { sub, role, ...rest } = overrides;
+  return {
+    iss: BASE_ISSUER,
+    aud: BASE_AUDIENCE,
+    exp: BASE_TIME,
+    iat: BASE_TIME,
+    role: role ?? "authenticated",
+    sub,
+    ...rest,
+  };
+};
 
 describe("createSupabaseAuthentication", () => {
   test("returns user when token is valid", async () => {
@@ -88,10 +112,7 @@ describe("createSupabaseAuthentication", () => {
 
 describe("createProvisioningSupabaseAuthentication", () => {
   test("invokes account provisioner after authentication", async () => {
-    const token: SupabaseToken = {
-      sub: "user-789",
-      email: "user@example.com",
-    };
+    const token = buildToken({ sub: "user-789", email: "user@example.com" });
 
     const baseProvider: AuthenticationProvider = {
       async authenticate() {
@@ -133,9 +154,7 @@ describe("createProvisioningSupabaseAuthentication", () => {
   });
 
   test("passes null email when token does not include it", async () => {
-    const token: SupabaseToken = {
-      sub: "user-555",
-    };
+    const token = buildToken({ sub: "user-555" });
 
     const baseProvider: AuthenticationProvider = {
       async authenticate() {
@@ -166,44 +185,6 @@ describe("createProvisioningSupabaseAuthentication", () => {
     await authentication.authenticate({ request });
 
     expect(received).toBeNull();
-  });
-
-  test("skips provisioning when token is not a Supabase token", async () => {
-    const token: HeaderToken = {
-      type: "header",
-      scheme: "Bearer",
-      value: "opaque-token",
-    };
-
-    const baseProvider: AuthenticationProvider = {
-      async authenticate() {
-        return {
-          user: {
-            id: "user-opaque",
-            token,
-          },
-        };
-      },
-    };
-
-    let called = false;
-
-    const authentication = createProvisioningSupabaseAuthentication(
-      { projectUrl: "https://example.supabase.co" },
-      {
-        authenticationProvider: baseProvider,
-        accountProvisioner: {
-          async provision() {
-            called = true;
-          },
-        },
-      },
-    );
-
-    const request = new Request("https://example.com/api");
-    await authentication.authenticate({ request });
-
-    expect(called).toBe(false);
   });
 });
 

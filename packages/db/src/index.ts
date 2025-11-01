@@ -151,15 +151,30 @@ function sanitizeRole(role: unknown): string {
   return "anon";
 }
 
+// Supabase Auth JWT fields reference: https://supabase.com/docs/guides/auth/jwt-fields#typescriptjavascript
+export type AuthenticatorAssuranceLevel = "aal1" | "aal2";
+
 export type SupabaseToken = {
-  iss?: string;
-  sub?: string;
-  aud?: string | Array<string>;
-  exp?: number;
-  nbf?: number;
-  iat?: number;
+  iss: string;
+  sub: string;
+  aud: string | readonly string[];
+  exp: number;
+  iat: number;
+  role: string;
+  aal?: AuthenticatorAssuranceLevel;
+  session_id?: string;
+  email?: string;
+  phone?: string;
+  is_anonymous?: boolean;
   jti?: string;
-  role?: string;
+  nbf?: number;
+  app_metadata?: Record<string, unknown>;
+  user_metadata?: Record<string, unknown>;
+  amr?: readonly {
+    readonly method: string;
+    readonly timestamp: number;
+  }[];
+  ref?: string;
 } & Record<string, unknown>;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -179,33 +194,107 @@ function isSupabaseToken(value: unknown): value is SupabaseToken {
     return false;
   }
 
+  if (typeof value.iss !== "string") {
+    return false;
+  }
+
+  if (typeof value.sub !== "string") {
+    return false;
+  }
+
+  if (typeof value.aud !== "string" && !isStringArray(value.aud)) {
+    return false;
+  }
+
+  if (typeof value.exp !== "number") {
+    return false;
+  }
+
+  if (typeof value.iat !== "number") {
+    return false;
+  }
+
+  if (typeof value.role !== "string") {
+    return false;
+  }
+
   if (
-    "iss" in value &&
-    value.iss !== undefined &&
-    typeof value.iss !== "string"
+    "aal" in value &&
+    value.aal !== undefined &&
+    value.aal !== "aal1" &&
+    value.aal !== "aal2"
   ) {
     return false;
   }
 
   if (
-    "sub" in value &&
-    value.sub !== undefined &&
-    typeof value.sub !== "string"
+    "session_id" in value &&
+    value.session_id !== undefined &&
+    typeof value.session_id !== "string"
   ) {
     return false;
   }
 
-  if ("aud" in value && value.aud !== undefined) {
-    const audience = value.aud;
-    if (typeof audience !== "string" && !isStringArray(audience)) {
+  if (
+    "email" in value &&
+    value.email !== undefined &&
+    typeof value.email !== "string"
+  ) {
+    return false;
+  }
+
+  if (
+    "phone" in value &&
+    value.phone !== undefined &&
+    typeof value.phone !== "string"
+  ) {
+    return false;
+  }
+
+  if (
+    "is_anonymous" in value &&
+    value.is_anonymous !== undefined &&
+    typeof value.is_anonymous !== "boolean"
+  ) {
+    return false;
+  }
+
+  if (
+    "app_metadata" in value &&
+    value.app_metadata !== undefined &&
+    !isRecord(value.app_metadata)
+  ) {
+    return false;
+  }
+
+  if (
+    "user_metadata" in value &&
+    value.user_metadata !== undefined &&
+    !isRecord(value.user_metadata)
+  ) {
+    return false;
+  }
+
+  if ("amr" in value && value.amr !== undefined) {
+    if (!Array.isArray(value.amr)) {
       return false;
+    }
+
+    for (const item of value.amr) {
+      if (
+        !isRecord(item) ||
+        typeof item.method !== "string" ||
+        typeof item.timestamp !== "number"
+      ) {
+        return false;
+      }
     }
   }
 
   if (
-    "exp" in value &&
-    value.exp !== undefined &&
-    typeof value.exp !== "number"
+    "ref" in value &&
+    value.ref !== undefined &&
+    typeof value.ref !== "string"
   ) {
     return false;
   }
@@ -219,25 +308,9 @@ function isSupabaseToken(value: unknown): value is SupabaseToken {
   }
 
   if (
-    "iat" in value &&
-    value.iat !== undefined &&
-    typeof value.iat !== "number"
-  ) {
-    return false;
-  }
-
-  if (
     "jti" in value &&
     value.jti !== undefined &&
     typeof value.jti !== "string"
-  ) {
-    return false;
-  }
-
-  if (
-    "role" in value &&
-    value.role !== undefined &&
-    typeof value.role !== "string"
   ) {
     return false;
   }
