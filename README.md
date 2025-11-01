@@ -30,7 +30,6 @@
 
 ### `@listee/auth`
 - Exposes reusable authentication providers under `packages/auth/src/authentication/`.
-- `createHeaderAuthentication` performs lightweight header extraction suitable for development stubs.
 - `createSupabaseAuthentication` validates Supabase-issued JWT access tokens against the project's JWKS (`/auth/v1/.well-known/jwks.json`), enforces issuer/audience/role constraints, and returns a typed `SupabaseToken` payload.
 - Shared utilities (`shared.ts`, `errors.ts`) handle predictable error surfaces; tests live beside the implementation (`supabase.test.ts`) and exercise positive/negative paths.
 - The package emits declarations from `src/` only; test files are excluded from `dist/` via `tsconfig.json`.

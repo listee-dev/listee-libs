@@ -1,5 +1,4 @@
 import type {
-  AuthenticatedToken,
   AuthenticationContext,
   AuthenticationProvider,
   AuthenticationResult,
@@ -152,10 +151,6 @@ export function createProvisioningSupabaseAuthentication(
     context: AuthenticationContext,
   ): Promise<AuthenticationResult> {
     const result = await baseProvider.authenticate(context);
-    if (!isSupabaseToken(result.user.token)) {
-      return result;
-    }
-
     const email = extractEmailFromToken(result.user.token);
 
     await accountProvisioner.provision({
@@ -168,12 +163,4 @@ export function createProvisioningSupabaseAuthentication(
   }
 
   return { authenticate };
-}
-
-function isSupabaseToken(token: AuthenticatedToken): token is SupabaseToken {
-  if (typeof token !== "object" || token === null) {
-    return false;
-  }
-
-  return "sub" in token;
 }

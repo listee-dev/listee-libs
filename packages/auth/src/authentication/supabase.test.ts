@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import type {
   AuthenticatedToken,
   AuthenticationProvider,
-  HeaderToken,
   SupabaseAuthenticationOptions,
   SupabaseToken,
 } from "@listee/types";
@@ -166,44 +165,6 @@ describe("createProvisioningSupabaseAuthentication", () => {
     await authentication.authenticate({ request });
 
     expect(received).toBeNull();
-  });
-
-  test("skips provisioning when token is not a Supabase token", async () => {
-    const token: HeaderToken = {
-      type: "header",
-      scheme: "Bearer",
-      value: "opaque-token",
-    };
-
-    const baseProvider: AuthenticationProvider = {
-      async authenticate() {
-        return {
-          user: {
-            id: "user-opaque",
-            token,
-          },
-        };
-      },
-    };
-
-    let called = false;
-
-    const authentication = createProvisioningSupabaseAuthentication(
-      { projectUrl: "https://example.supabase.co" },
-      {
-        authenticationProvider: baseProvider,
-        accountProvisioner: {
-          async provision() {
-            called = true;
-          },
-        },
-      },
-    );
-
-    const request = new Request("https://example.com/api");
-    await authentication.authenticate({ request });
-
-    expect(called).toBe(false);
   });
 });
 

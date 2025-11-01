@@ -12,7 +12,6 @@ export type {
 export { createAccountProvisioner } from "./account/provision-account.js";
 export {
   AuthenticationError,
-  createHeaderAuthentication,
   createProvisioningSupabaseAuthentication,
   createSupabaseAuthentication,
 } from "./authentication/index.js";
