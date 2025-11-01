@@ -151,15 +151,30 @@ function sanitizeRole(role: unknown): string {
   return "anon";
 }
 
+// Supabase Auth JWT fields reference: https://supabase.com/docs/guides/auth/jwt-fields#typescriptjavascript
+export type AuthenticatorAssuranceLevel = "aal1" | "aal2";
+
 export type SupabaseToken = {
-  iss?: string;
-  sub?: string;
-  aud?: string | Array<string>;
-  exp?: number;
-  nbf?: number;
-  iat?: number;
+  iss: string;
+  sub: string;
+  aud: string | readonly string[];
+  exp: number;
+  iat: number;
+  role: string;
+  aal?: AuthenticatorAssuranceLevel;
+  session_id?: string;
+  email?: string;
+  phone?: string;
+  is_anonymous?: boolean;
   jti?: string;
-  role?: string;
+  nbf?: number;
+  app_metadata?: Record<string, unknown>;
+  user_metadata?: Record<string, unknown>;
+  amr?: readonly {
+    readonly method: string;
+    readonly timestamp: number;
+  }[];
+  ref?: string;
 } & Record<string, unknown>;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
