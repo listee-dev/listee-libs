@@ -11,6 +11,13 @@ import type {
 } from "@listee/types";
 import { createApp } from "./app";
 
+const BASE_CLAIMS = {
+  iss: "https://example.supabase.co/auth/v1",
+  aud: "authenticated" as const,
+  exp: 1_700_000_000,
+  iat: 1_700_000_000,
+};
+
 function createRequest(path: string, init: RequestInit = {}): Request {
   return new Request(`http://localhost${path}`, init);
 }
@@ -34,6 +41,7 @@ function createTestAuthentication(): AuthenticationProvider {
       }
 
       const token: SupabaseToken = {
+        ...BASE_CLAIMS,
         sub: tokenValue,
         role: "authenticated",
       };

@@ -97,15 +97,47 @@ export function createSupabaseAuthentication(
       verifyOptions,
     );
     const subject = assertNonEmptyString(payload.sub, "Missing subject claim");
+    const issuerClaim = assertNonEmptyString(
+      payload.iss,
+      "Missing issuer claim",
+    );
+
+    const audienceClaim = payload.aud;
+    if (typeof audienceClaim !== "string" && !Array.isArray(audienceClaim)) {
+      throw new AuthenticationError("Missing audience claim");
+    }
+
+    const expirationClaim = payload.exp;
+    if (typeof expirationClaim !== "number") {
+      throw new AuthenticationError("Missing exp claim");
+    }
+
+    const issuedAtClaim = payload.iat;
+    if (typeof issuedAtClaim !== "number") {
+      throw new AuthenticationError("Missing iat claim");
+    }
+
+    const roleClaim = assertNonEmptyString(payload.role, "Missing role claim");
 
     if (requiredRole !== undefined) {
-      const role = assertNonEmptyString(payload.role, "Missing role claim");
-      if (role !== requiredRole) {
+      if (roleClaim !== requiredRole) {
         throw new AuthenticationError("Role not allowed");
       }
     }
 
-    const token: SupabaseToken = { ...payload };
+    const additionalClaims = payload as Record<string, unknown>;
+    const normalizedAudience =
+      typeof audienceClaim === "string" ? audienceClaim : [...audienceClaim];
+
+    const token: SupabaseToken = {
+      ...additionalClaims,
+      iss: issuerClaim,
+      sub: subject,
+      aud: normalizedAudience,
+      exp: expirationClaim,
+      iat: issuedAtClaim,
+      role: roleClaim,
+    };
 
     return {
       user: {

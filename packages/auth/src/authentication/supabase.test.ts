@@ -12,6 +12,25 @@ import {
   createSupabaseAuthentication,
 } from "./index.js";
 
+const BASE_CLAIMS = {
+  iss: "https://example.supabase.co/auth/v1",
+  aud: "authenticated" as const,
+  exp: 1_700_000_000,
+  iat: 1_700_000_000,
+  role: "authenticated" as const,
+} satisfies Pick<SupabaseToken, "iss" | "aud" | "exp" | "iat" | "role">;
+
+const buildToken = (
+  overrides: Omit<SupabaseToken, "iss" | "aud" | "exp" | "iat" | "role"> &
+    Partial<Pick<SupabaseToken, "role">>,
+): SupabaseToken => {
+  return {
+    ...BASE_CLAIMS,
+    ...overrides,
+    role: overrides.role ?? BASE_CLAIMS.role,
+  };
+};
+
 describe("createSupabaseAuthentication", () => {
   test("returns user when token is valid", async () => {
     const helper = await createSupabaseTestHelper({
@@ -87,10 +106,7 @@ describe("createSupabaseAuthentication", () => {
 
 describe("createProvisioningSupabaseAuthentication", () => {
   test("invokes account provisioner after authentication", async () => {
-    const token: SupabaseToken = {
-      sub: "user-789",
-      email: "user@example.com",
-    };
+    const token = buildToken({ sub: "user-789", email: "user@example.com" });
 
     const baseProvider: AuthenticationProvider = {
       async authenticate() {
@@ -132,9 +148,7 @@ describe("createProvisioningSupabaseAuthentication", () => {
   });
 
   test("passes null email when token does not include it", async () => {
-    const token: SupabaseToken = {
-      sub: "user-555",
-    };
+    const token = buildToken({ sub: "user-555" });
 
     const baseProvider: AuthenticationProvider = {
       async authenticate() {
