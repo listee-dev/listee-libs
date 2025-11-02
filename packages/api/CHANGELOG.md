@@ -1,5 +1,15 @@
 # @listee/api
 
+## 0.3.1
+
+### Patch Changes
+
+- Align Supabase authentication and token validation across packages in preparation for JWT-only clients.
+- Updated dependencies
+  - @listee/auth@0.4.0
+  - @listee/types@0.4.0
+  - @listee/db@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes
