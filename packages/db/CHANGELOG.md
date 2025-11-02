@@ -1,5 +1,11 @@
 # @listee/db
 
+## 0.4.0
+
+### Minor Changes
+
+- Align Supabase authentication and token validation across packages in preparation for JWT-only clients.
+
 ## 0.3.0
 
 ### Minor Changes
