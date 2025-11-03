@@ -45,20 +45,6 @@ function buildSupabaseJwksUrl(
   return new URL(normalizedPath, projectUrl);
 }
 
-function normalizeAudience(
-  audience: string | readonly string[] | undefined,
-): string | string[] | undefined {
-  if (audience === undefined) {
-    return undefined;
-  }
-
-  if (typeof audience === "string") {
-    return audience;
-  }
-
-  return [...audience];
-}
-
 export function createSupabaseAuthentication(
   options: SupabaseAuthenticationOptions,
 ): AuthenticationProvider {
@@ -67,7 +53,7 @@ export function createSupabaseAuthentication(
   const projectUrl = parseSupabaseProjectUrl(options.projectUrl);
   const issuer = (options.issuer ?? buildSupabaseIssuerUrl(projectUrl)).trim();
   const jwksUrl = buildSupabaseJwksUrl(projectUrl, options.jwksPath);
-  const audience = normalizeAudience(options.audience);
+  const audience = options.audience;
   const requiredRole = options.requiredRole;
   const clockTolerance = options.clockToleranceSeconds;
 
