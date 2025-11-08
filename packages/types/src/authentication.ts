@@ -21,7 +21,7 @@ export interface AuthenticationProvider {
 
 export interface SupabaseAuthenticationOptions {
   readonly projectUrl: string;
-  readonly audience?: string;
+  readonly audience?: string | readonly string[];
   readonly issuer?: string;
   readonly requiredRole?: string;
   readonly clockToleranceSeconds?: number;
