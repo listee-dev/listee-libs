@@ -70,7 +70,8 @@ export function createSupabaseAuthentication(
     }
 
     if (audience !== undefined) {
-      verifyOptions.audience = audience;
+      verifyOptions.audience =
+        typeof audience === "string" ? audience : [...audience];
     }
 
     if (clockTolerance !== undefined) {
@@ -112,7 +113,7 @@ export function createSupabaseAuthentication(
     }
 
     const additionalClaims = payload as Record<string, unknown>;
-    const normalizedAudience =
+    const normalizedAudience: string | string[] =
       typeof audienceClaim === "string" ? audienceClaim : [...audienceClaim];
 
     const token: SupabaseToken = {

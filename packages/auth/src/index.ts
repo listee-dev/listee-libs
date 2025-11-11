@@ -15,3 +15,12 @@ export {
   createProvisioningSupabaseAuthentication,
   createSupabaseAuthentication,
 } from "./authentication/index.js";
+export type {
+  SupabaseAuthClient,
+  SupabaseAuthClientOptions,
+  SupabaseTokenPayload,
+} from "./supabase/index.js";
+export {
+  createSupabaseAuthClient,
+  SupabaseAuthError,
+} from "./supabase/index.js";

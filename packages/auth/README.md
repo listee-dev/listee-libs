@@ -10,11 +10,14 @@ npm install @listee/auth
 
 ## Features
 
+- Supabase Auth REST client via `createSupabaseAuthClient`
 - Supabase JWT verification via `createSupabaseAuthentication`
 - Account provisioning wrapper `createProvisioningSupabaseAuthentication`
 - Strongly typed `AuthenticatedUser` and `AuthenticationContext` exports
 
 ## Quick start
+
+### Verify Supabase JWTs
 
 ```ts
 import { createSupabaseAuthentication } from "@listee/auth";
@@ -30,7 +33,22 @@ const user = result.user;
 // Continue handling the request with user.id and user.token
 ```
 
-See `src/authentication/` for additional adapters and tests demonstrating error handling scenarios.
+### Call Supabase Auth REST endpoints
+
+```ts
+import { createSupabaseAuthClient } from "@listee/auth";
+
+const auth = createSupabaseAuthClient({
+  projectUrl: "https://<project>.supabase.co",
+  publishableKey: process.env.SUPABASE_PUBLISHABLE_KEY!,
+});
+
+await auth.signup({ email: "user@example.com", password: "secret" });
+const tokens = await auth.login({ email: "user@example.com", password: "secret" });
+const refreshed = await auth.refresh({ refreshToken: tokens.refreshToken });
+```
+
+See `src/authentication/` and `src/supabase/` for additional adapters and tests demonstrating error handling scenarios.
 
 ## Development
 

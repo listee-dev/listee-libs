@@ -1,5 +1,13 @@
 # @listee/api
 
+## 0.3.2
+
+### Patch Changes
+
+- Updated dependencies
+  - @listee/auth@0.5.0
+  - @listee/types@0.5.0
+
 ## 0.3.1
 
 ### Patch Changes
