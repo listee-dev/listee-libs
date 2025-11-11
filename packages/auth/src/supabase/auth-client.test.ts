@@ -3,11 +3,26 @@ import { createSupabaseAuthClient, SupabaseAuthError } from "./index.js";
 
 type MockHandler = (request: Request) => Promise<Response> | Response;
 
+const ensureValue = <T>(value: T | null | undefined, message: string): T => {
+  if (value === null || value === undefined) {
+    throw new Error(message);
+  }
+  return value;
+};
+
 const createMockFetch = (handler: MockHandler): typeof fetch => {
-  return async (input: RequestInfo, init?: RequestInit) => {
+  const fetchFn = async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = input instanceof Request ? input : new Request(input, init);
     return await handler(request);
   };
+
+  const fetchWithPreconnect: typeof fetch = Object.assign(fetchFn, {
+    async preconnect() {
+      return;
+    },
+  });
+
+  return fetchWithPreconnect;
 };
 
 describe("createSupabaseAuthClient", () => {
@@ -93,7 +108,12 @@ describe("createSupabaseAuthClient", () => {
       redirectUrl: "https://app.example.dev/callback",
     });
 
-    expect(receivedUrl).toBe(
+    const resolvedUrl = ensureValue<string>(
+      receivedUrl,
+      "Expected signup to issue an HTTP request.",
+    );
+
+    expect(resolvedUrl).toBe(
       "https://example.supabase.co/auth/v1/signup?redirect_to=" +
         encodeURIComponent("https://app.example.dev/callback"),
     );
