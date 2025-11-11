@@ -1,5 +1,11 @@
 # @listee/types
 
+## 0.5.0
+
+### Minor Changes
+
+- Add the Supabase Auth REST client and allow Supabase audience config arrays so Listee API can consume the shared client.
+
 ## 0.4.0
 
 ### Minor Changes
